@@ -41,37 +41,77 @@ The project has moved from a flat structure to a domain-driven layout to support
 
 ```text
 src/
-  ├── components/              # 🧩 SHARED ATOMS
-  │   ├── ui/                  # Buttons, Loaders, Modals, Icons
-  │   ├── Navbar.jsx           # Context-aware navigation (changes based on subdomain)
-  │   └── Layout.jsx           # Global layout wrapper
+  ├── components/              # 🧩 SHARED COMPONENTS
+  │   ├── Skeletons/           # Loading skeleton components
+  │   │   ├── ProfileSkeleton.jsx
+  │   │   ├── MemoriesSkeleton.jsx
+  │   │   ├── GallerySkeleton.jsx
+  │   │   └── FamilyHeroSkeleton.jsx
+  │   ├── Navbar.jsx           # Context-aware navigation with breadcrumbs
+  │   ├── Layout.jsx           # Global layout wrapper
+  │   ├── Lightbox.jsx         # Image/video lightbox modal
+  │   └── NavigationLoader.jsx # Route transition overlay
   │
-  ├── templates/               # 🏭 PAGE ENGINES
-  │   ├── GlobalTree/          # Logic for the main apna.family tree
-  │   ├── FamilyPortal/        # Logic for family landing pages
-  │   ├── MemorialProfile/     # The "Baljit" site template (Hero, Gallery, Events)
-  │   └── VideoVault/          # The "HomeVideos" grid template
+  ├── templates/               # 🏭 PAGE TEMPLATES
+  │   ├── GlobalTree/          # Root landing page (apna.family)
+  │   │   └── LandingPage.jsx
+  │   ├── FamilyPortal/        # Family landing pages
+  │   │   ├── FamilyPage.jsx
+  │   │   └── FamilyHero.jsx
+  │   ├── MemorialProfile/     # Individual memorial pages
+  │   │   ├── MemorialPage.jsx # Wrapper with PersonContext
+  │   │   ├── ProfilePage.jsx  # Main page composition
+  │   │   ├── Profile.jsx      # Profile section (was Hero)
+  │   │   ├── VideoSection.jsx # Memories section (videos + stories)
+  │   │   ├── Gallery.jsx      # Photo gallery
+  │   │   ├── Events.jsx       # Event details (optional)
+  │   │   ├── Stories.jsx      # Stories section (merged into Memories)
+  │   │   └── Hero.jsx         # Legacy (replaced by Profile)
+  │   └── VideoVault/          # Home videos page
+  │       ├── VideoVaultPage.jsx
+  │       └── VideoGrid.jsx
   │
-  ├── data/                    # 🧠 THE DATABASE
-  │   ├── families/            # Family configuration (theme colors, passwords)
+  ├── contexts/                # 🔄 REACT CONTEXTS
+  │   ├── FamilyContext.jsx    # Family data & theme
+  │   └── PersonContext.jsx    # Person/memorial data
+  │
+  ├── data/                    # 🧠 DATA FILES
+  │   ├── families/            # Family configuration
   │   │   ├── grewal.json
   │   │   └── wong.json
-  │   └── people/              # Individual profile data (extracted from constants.js)
-  │       ├── grewal-baljit.json
-  │       └── wong-jane.json
+  │   ├── people/              # Person memorial data
+  │   │   ├── grewal-baljit.json
+  │   │   └── wong-jane.json
+  │   └── tree.json            # Family tree data
   │
-  ├── utils/
-  │   ├── subdomain.js         # Logic to parse "grewal.apna.family"
-  │   └── mediaUtils.js        # Cloudinary URL optimization helpers
+  ├── utils/                   # 🛠 UTILITY FUNCTIONS
+  │   ├── subdomain.js         # Subdomain parsing logic
+  │   ├── dataLoader.js        # Dynamic JSON data loading
+  │   ├── loadingDelay.js     # Minimum loading delay utility
+  │   └── csvParser.js         # Gallery CSV parsing
   │
-  └── App.jsx                  # 🚦 Traffic Controller (Routes based on window.location)
+  ├── styles/                  # 🎨 STYLING
+  │   ├── theme.js             # Theme configuration
+  │   └── GlobalStyles.js      # Global CSS styles
+  │
+  ├── custom/                  # 🎨 CUSTOM OVERRIDES
+  │   └── README.md            # Documentation for custom pages
+  │
+  ├── overrideRegistry.js      # Custom page override mapping
+  ├── App.jsx                  # 🚦 Traffic Controller (routing)
+  ├── main.jsx                 # React entry point
+  ├── index.css                # Base CSS
+  └── constants.js             # ⚠️ DEPRECATED (data moved to JSON)
 
 public/
   ├── images/
-  │   ├── grewal/              # Media isolated by family
-  │   │   ├── gallery.csv      # Family-specific metadata
-  │   │   └── images.json      # Generated file
+  │   ├── grewal/              # Grewal family media
+  │   │   ├── gallery.csv      # Gallery metadata
+  │   │   ├── images.json      # Generated gallery index
+  │   │   ├── thumbnails/      # Generated thumbnails
+  │   │   └── program/         # Event programs
   │   └── wong/                # Wong family media
+  └── portrait.png             # Default portrait (legacy)
 
 ```
 
@@ -260,6 +300,13 @@ withMinimumDelay(loadFamilyData(familyId), 1000)
 - No manual implementation needed
 - Integrated at the root level in `App.jsx`
 
+**Breadcrumb Loading States:**
+- Navbar breadcrumbs show skeleton shimmer text while data loads
+- Family name shows skeleton when `FamilyContext.loading === true`
+- Person name shows skeleton when `PersonContext.loading === true`
+- Provides visual feedback during navigation transitions
+- Example: `Home > [skeleton]` while family data loads, then `Home > The Grewals`
+
 ---
 
 ## 📐 Development Standards
@@ -323,10 +370,26 @@ return <Component data={data} />
 - **Mobile-first** responsive design
 - **Elder-friendly** touch targets (minimum 44px)
 - **Consistent spacing** using theme values
+- **Shimmer animations** for skeleton loaders (2s infinite)
 
 ### File Naming
 
 - **Components:** PascalCase (`Profile.jsx`)
 - **Skeletons:** PascalCase with "Skeleton" suffix (`ProfileSkeleton.jsx`)
-- **Utils:** camelCase (`loadingDelay.js`)
+- **Utils:** camelCase (`loadingDelay.js`, `dataLoader.js`)
 - **Contexts:** PascalCase with "Context" suffix (`FamilyContext.jsx`)
+- **Templates:** PascalCase (`FamilyPage.jsx`, `ProfilePage.jsx`)
+
+### Navigation Structure
+
+The Navbar component (`src/components/Navbar.jsx`) provides:
+- **Breadcrumb navigation** with skeleton loading states
+- **Section navigation** (Profile, Memories, Gallery) on person pages
+- **Context-aware** rendering based on current route and data availability
+- **Fixed positioning** for consistent visibility
+
+**Breadcrumb Examples:**
+- Root: No breadcrumbs (just navbar)
+- Family page: `Home > The Grewals` (skeleton while loading)
+- Person page: `Home > The Grewals > Baljit Singh Grewal` (skeleton for person name while loading)
+- Home Videos: `Home > The Grewals > Home Videos`
