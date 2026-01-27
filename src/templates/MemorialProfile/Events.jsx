@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { Calendar, Clock, MapPin, Navigation, Download, Phone, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { usePerson } from '../../contexts/PersonContext'
+import { useFamily } from '../../contexts/FamilyContext'
 
 const Card = styled.div`
   background-color: ${props => props.theme.colors.cardBackground};
@@ -502,6 +503,7 @@ const renderEventDetails = (event, isMain = false, onShowProgram = null) => {
 
 export default function Events() {
   const { eventData } = usePerson()
+  const { familyId } = useFamily()
   const [showProgramModal, setShowProgramModal] = useState(false)
 
   if (!eventData) {
@@ -587,7 +589,7 @@ export default function Events() {
               <X />
             </ModalCloseButton>
             <ModalImage 
-              src={eventData.programPdfUrl} 
+              src={eventData.programPdfUrl?.replace('/images/program/', `/images/${familyId}/program/`) || eventData.programPdfUrl} 
               alt="Program" 
             />
             <ModalCancelButton onClick={handleCloseProgram}>

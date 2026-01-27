@@ -1,0 +1,1 @@
+- on the individual pages (eg. grewal.localhost/baljit), the header is not sticky

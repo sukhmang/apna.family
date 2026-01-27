@@ -1,4 +1,18 @@
-// Easy-to-edit constants for the memorial site
+/**
+ * @deprecated This file is deprecated and kept for backward compatibility only.
+ * 
+ * All data has been migrated to JSON files:
+ * - Family data: src/data/families/{familyId}.json
+ * - Person data: src/data/people/{familyId}-{personId}.json
+ * 
+ * Components should use context hooks instead:
+ * - useFamily() for family data
+ * - usePerson() for person data
+ * 
+ * This file will be removed in a future version.
+ */
+
+// Easy-to-edit constants for the memorial site (DEPRECATED)
 export const MEMORIAL_DATA = {
   name: "Baljit Singh Grewal",
   birthDate: "January 1, 1953",
