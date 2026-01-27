@@ -74,6 +74,37 @@ npm run migrate-to-supabase
 
 ---
 
+### 005-rls-policies.sql
+**Purpose:** Enable Row Level Security (RLS) and create security policies
+
+**When to run:** After authentication is working (Milestone 4), before testing permissions
+
+**How to run:**
+1. Open Supabase Dashboard → SQL Editor
+2. Copy and paste the entire contents of `005-rls-policies.sql`
+3. Click "Run" (or press Cmd/Ctrl + Enter)
+4. Verify policies are created (check verification queries at bottom)
+
+**What it does:**
+- Enables RLS on `families`, `people`, and `user_permissions` tables
+- Creates policies for public read access
+- Creates policies for role-based edit access (super_admin, admin, editor)
+- Enforces permissions at the database level
+
+**Important Notes:**
+- RLS policies enforce security at the database level
+- Even if frontend code tries to edit, RLS will block unauthorized changes
+- Super admins can edit all families
+- Family admins/editors can only edit their assigned family
+- Unauthenticated users can read but not edit
+
+**Testing:**
+- After running, test that logged-in users can read data
+- Test that super_admin can edit
+- Test that users without permissions cannot edit (should get RLS error)
+
+---
+
 ## Environment Setup
 
 Before running migrations, ensure `.env.local` is configured:
@@ -97,6 +128,8 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 - [ ] Verify data in Supabase Dashboard
 - [ ] Run `003-add-super-admin.sql` in DEV
 - [ ] Test app functionality
+- [ ] Run `005-rls-policies.sql` in DEV (after authentication works)
+- [ ] Test permissions and RLS policies
 - [ ] Repeat all steps in PRD
 
 ### Adding New Super Admin
