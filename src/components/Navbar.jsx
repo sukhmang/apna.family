@@ -1,10 +1,19 @@
 import { useState, useEffect, useRef, useContext } from 'react'
 import { useLocation } from 'react-router-dom'
-import styled from 'styled-components'
+import styled, { keyframes } from 'styled-components'
 import { Heart, User, Images, Home, ChevronRight } from 'lucide-react'
 import { PersonContext } from '../contexts/PersonContext'
 import { FamilyContext } from '../contexts/FamilyContext'
 import { parseSubdomain, isRootDomain } from '../utils/subdomain'
+
+const shimmer = keyframes`
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+`
 
 const Nav = styled.nav`
   position: fixed;
@@ -127,6 +136,28 @@ const BreadcrumbSeparator = styled(ChevronRight)`
     width: 1rem;
     height: 1rem;
     margin: 0 0.1875rem;
+  }
+`
+
+const BreadcrumbSkeleton = styled.div`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  min-height: 36px;
+  border-radius: ${props => props.theme.borderRadius.sm};
+  background: linear-gradient(
+    90deg,
+    ${props => props.theme.colors.background} 0%,
+    ${props => props.theme.colors.border} 50%,
+    ${props => props.theme.colors.background} 100%
+  );
+  background-size: 1000px 100%;
+  animation: ${shimmer} 2s infinite;
+  width: ${props => props.$width || '80px'};
+  
+  @media (min-width: 640px) {
+    padding: 0.375rem 0.75rem;
+    width: ${props => props.$width || '100px'};
   }
 `
 
@@ -521,22 +552,49 @@ export default function Navbar() {
     // If on family subdomain, add family link
     if (!isRoot && familyId) {
       const familyUrl = `${protocol}//${familyId}.${currentHost.includes('.localhost') ? 'localhost' : (currentHost.includes('.') ? currentHost.split('.').slice(-2).join('.') : currentHost)}${port ? `:${port}` : ''}`
-      // Use formatted name if available, otherwise capitalize familyId
-      const familyDisplayName = familyData?.displayName || 
-                               familyData?.name || 
-                               (familyId ? familyId.charAt(0).toUpperCase() + familyId.slice(1) + ' Family' : 'Family')
-      crumbs.push({
-        label: familyDisplayName,
-        href: familyUrl
-      })
+      
+      // Check if family data is still loading
+      // Only show skeleton on family landing page, not on person pages (family already loaded)
+      const isFamilyLoading = familyContext?.loading && pathname === '/'
+      
+      if (isFamilyLoading) {
+        // Show skeleton while loading (only on family landing page)
+        crumbs.push({
+          label: null, // null indicates skeleton
+          href: null,
+          isSkeleton: true,
+          skeletonWidth: '120px' // Approximate width for "The Grewals"
+        })
+      } else {
+        // Use formatted name if available, otherwise capitalize familyId
+        const familyDisplayName = familyData?.displayName || 
+                                 familyData?.name || 
+                                 (familyId ? familyId.charAt(0).toUpperCase() + familyId.slice(1) + ' Family' : 'Family')
+        crumbs.push({
+          label: familyDisplayName,
+          href: familyUrl
+        })
+      }
 
       // If on person page, add person link
-      if (memorialData && pathname !== '/' && pathname !== '/homevideos') {
+      if (pathname !== '/' && pathname !== '/homevideos') {
         const personId = pathname.slice(1) // Remove leading slash
-        crumbs.push({
-          label: memorialData.name,
-          href: null // Current page, no link
-        })
+        const isPersonLoading = personContext?.loading
+        
+        if (isPersonLoading) {
+          // Show skeleton while loading person data
+          crumbs.push({
+            label: null,
+            href: null,
+            isSkeleton: true,
+            skeletonWidth: '120px' // Approximate width for person name
+          })
+        } else if (memorialData) {
+          crumbs.push({
+            label: memorialData.name,
+            href: null // Current page, no link
+          })
+        }
       } else if (pathname === '/homevideos') {
         crumbs.push({
           label: 'Home Videos',
@@ -565,7 +623,9 @@ export default function Navbar() {
               
               return (
                 <span key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  {crumb.href ? (
+                  {crumb.isSkeleton ? (
+                    <BreadcrumbSkeleton $width={crumb.skeletonWidth} />
+                  ) : crumb.href ? (
                     <BreadcrumbLink href={crumb.href}>
                       {Icon && <Icon />}
                       {crumb.label}
