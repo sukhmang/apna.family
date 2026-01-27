@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import { loadFamilyData } from '../../utils/dataLoader'
 import { withMinimumDelay } from '../../utils/loadingDelay'
 import { getAllFamilyIdsFromTree } from '../../utils/treeLoader'
 import FamilyTreeViewer from '../../components/FamilyTree/FamilyTreeViewer'
+import TreeControls from '../../components/FamilyTree/TreeControls'
+import SimpleListView from '../../components/FamilyTree/SimpleListView'
 
 const Container = styled.div`
   max-width: 100%;
@@ -56,35 +58,6 @@ const LoadingText = styled.p`
   color: ${props => props.theme.colors.text.secondary};
 `
 
-const ViewToggle = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-  margin-bottom: 2rem;
-`
-
-const ToggleButton = styled.button`
-  padding: 0.5rem 1rem;
-  font-size: ${props => props.theme.typography.sizes.sm};
-  font-weight: ${props => props.theme.typography.weights.semibold};
-  color: ${props => props.$active 
-    ? props.theme.colors.cardBackground 
-    : props.theme.colors.text.secondary};
-  background-color: ${props => props.$active 
-    ? props.theme.colors.accent 
-    : props.theme.colors.cardBackground};
-  border: 1px solid ${props => props.theme.colors.border};
-  border-radius: ${props => props.theme.borderRadius.md};
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background-color: ${props => props.$active 
-      ? props.theme.colors.accentHover 
-      : props.theme.colors.border};
-  }
-`
-
 const TreeContainer = styled.div`
   width: 100%;
   max-width: 100%;
@@ -97,9 +70,24 @@ const TreeContainer = styled.div`
  * Displays interactive family tree visualization (unified tree showing all families)
  */
 export default function LandingPage() {
-  const [viewMode, setViewMode] = useState('tree') // 'tree' | 'list'
+  const [viewMode, setViewMode] = useState(() => {
+    // Load from localStorage if available
+    const saved = localStorage.getItem('familyTreeViewMode')
+    return saved === 'list' ? 'list' : 'tree'
+  })
+  const [selectedPersonId, setSelectedPersonId] = useState(() => {
+    // Load from localStorage if available
+    const saved = localStorage.getItem('familyTreeSelectedPerson')
+    return saved || null
+  })
+  const [useIndianTerms, setUseIndianTerms] = useState(() => {
+    // Load from localStorage if available
+    const saved = localStorage.getItem('familyTreeUseIndianTerms')
+    return saved === 'true'
+  })
   const [families, setFamilies] = useState([])
   const [loading, setLoading] = useState(true)
+  const treeViewerRef = useRef(null)
 
   useEffect(() => {
     // Load all families dynamically from tree.json
@@ -164,6 +152,47 @@ export default function LandingPage() {
     loadFamilies()
   }, [])
 
+  // Save preferences to localStorage
+  useEffect(() => {
+    localStorage.setItem('familyTreeViewMode', viewMode)
+  }, [viewMode])
+
+  useEffect(() => {
+    if (selectedPersonId) {
+      localStorage.setItem('familyTreeSelectedPerson', selectedPersonId)
+    } else {
+      localStorage.removeItem('familyTreeSelectedPerson')
+    }
+  }, [selectedPersonId])
+
+  useEffect(() => {
+    localStorage.setItem('familyTreeUseIndianTerms', useIndianTerms.toString())
+  }, [useIndianTerms])
+
+  const handlePersonSelect = (personId) => {
+    setSelectedPersonId(personId)
+  }
+
+  const handleLanguageToggle = (useIndian) => {
+    setUseIndianTerms(useIndian)
+  }
+
+  const handleViewToggle = (mode) => {
+    setViewMode(mode)
+  }
+
+  const handleZoomFit = () => {
+    if (treeViewerRef.current) {
+      treeViewerRef.current.fitView()
+    }
+  }
+
+  const handleZoomReset = () => {
+    if (treeViewerRef.current) {
+      treeViewerRef.current.setViewport({ x: 0, y: 0, zoom: 1 })
+    }
+  }
+
   if (loading) {
     return (
       <Container>
@@ -179,56 +208,28 @@ export default function LandingPage() {
       <Title>Apna Family Network</Title>
       <Subtitle>Connecting families through shared memories and stories</Subtitle>
       
-      <ViewToggle>
-        <ToggleButton 
-          $active={viewMode === 'tree'}
-          onClick={() => setViewMode('tree')}
-        >
-          Tree View
-        </ToggleButton>
-        <ToggleButton 
-          $active={viewMode === 'list'}
-          onClick={() => setViewMode('list')}
-        >
-          List View
-        </ToggleButton>
-      </ViewToggle>
+      <TreeControls
+        selectedPersonId={selectedPersonId}
+        onPersonSelect={handlePersonSelect}
+        useIndianTerms={useIndianTerms}
+        onLanguageToggle={handleLanguageToggle}
+        viewMode={viewMode}
+        onViewToggle={handleViewToggle}
+        onZoomFit={handleZoomFit}
+        onZoomReset={handleZoomReset}
+      />
 
       {viewMode === 'tree' ? (
         <TreeContainer>
-          <FamilyTreeViewer familyId={null} />
+          <FamilyTreeViewer 
+            ref={treeViewerRef}
+            familyId={null}
+            selectedPersonId={selectedPersonId}
+            useIndianTerms={useIndianTerms}
+          />
         </TreeContainer>
       ) : (
-        <>
-          {families.length === 0 ? (
-            <LoadingText>No families available yet.</LoadingText>
-          ) : (
-            <FamilyList>
-              {families.map(family => {
-                // Build subdomain URL
-                const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
-                const port = typeof window !== 'undefined' ? window.location.port : '5173'
-                const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:'
-                
-                // Extract base domain (e.g., "localhost" or "apna.family")
-                const baseDomain = currentHost.includes('.') 
-                  ? currentHost.split('.').slice(-2).join('.') 
-                  : currentHost
-                
-                const subdomainUrl = `${protocol}//${family.id}.${baseDomain}${port ? `:${port}` : ''}`
-                
-                return (
-                  <FamilyLink 
-                    key={family.id}
-                    href={subdomainUrl}
-                  >
-                    {family.name}
-                  </FamilyLink>
-                )
-              })}
-            </FamilyList>
-          )}
-        </>
+        <SimpleListView familyId={null} />
       )}
     </Container>
   )

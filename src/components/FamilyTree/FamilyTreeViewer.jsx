@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useImperativeHandle, forwardRef, useRef } from 'react'
 import ReactFlow, {
   Background,
   Controls,
@@ -106,17 +106,32 @@ function getLayoutedElements(nodes, edges) {
  * @param {string} props.selectedPersonId - Optional person ID for relationship calculations
  * @param {boolean} props.useIndianTerms - Whether to use Indian relationship terms
  */
-export default function FamilyTreeViewer({ 
+const FamilyTreeViewer = forwardRef(function FamilyTreeViewer({ 
   familyId = null, 
   onNodeClick = null,
   selectedPersonId = null,
   useIndianTerms = false
-}) {
+}, ref) {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [allPeople, setAllPeople] = useState([])
+  const reactFlowInstanceRef = useRef(null)
+
+  // Expose methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    fitView: () => {
+      if (reactFlowInstanceRef.current) {
+        reactFlowInstanceRef.current.fitView()
+      }
+    },
+    setViewport: (viewport) => {
+      if (reactFlowInstanceRef.current) {
+        reactFlowInstanceRef.current.setViewport(viewport)
+      }
+    }
+  }))
 
   useEffect(() => {
     const loadTree = async () => {
@@ -219,6 +234,10 @@ export default function FamilyTreeViewer({
     [setEdges]
   )
 
+  const onInit = useCallback((reactFlowInstance) => {
+    reactFlowInstanceRef.current = reactFlowInstance
+  }, [])
+
   if (loading) {
     return (
       <LoadingContainer>
@@ -243,6 +262,7 @@ export default function FamilyTreeViewer({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onInit={onInit}
         nodeTypes={nodeTypes}
         fitView
         attributionPosition="bottom-left"
@@ -262,4 +282,6 @@ export default function FamilyTreeViewer({
       </ReactFlow>
     </Container>
   )
-}
+})
+
+export default FamilyTreeViewer
