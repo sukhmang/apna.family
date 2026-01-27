@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { Handle, Position } from 'reactflow'
 import styled from 'styled-components'
+import { MapPin, PawPrint } from 'lucide-react'
 import { ErrorBoundary } from '../ErrorBoundary'
 
 const NodeContainer = styled.div`
@@ -13,7 +14,9 @@ const NodeContainer = styled.div`
     }
     return props.$familyColor?.border || props.theme.colors.border
   }};
-  border-radius: ${props => props.theme.borderRadius.md};
+  border-radius: ${props => props.$isPet 
+    ? props.theme.borderRadius.full 
+    : props.theme.borderRadius.md};
   box-shadow: ${props => props.theme.shadows.md};
   overflow: hidden;
   cursor: pointer;
@@ -73,13 +76,16 @@ const Name = styled.div`
   margin-bottom: 0.25rem;
   line-height: 1.2;
   word-wrap: break-word;
+  display: ${props => props.$hideText ? 'none' : 'block'};
 `
 
 const Dates = styled.div`
   font-size: ${props => props.theme.typography.sizes.sm};
   color: ${props => props.theme.colors.text.secondary};
   margin-bottom: 0.5rem;
+  display: ${props => props.$hideText ? 'none' : 'block'};
 `
+
 
 const Badge = styled.div`
   display: inline-block;
@@ -113,13 +119,50 @@ const RelationshipBadge = styled.div`
 const DefaultImage = styled.div`
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, ${props => props.theme.colors.accent}15 0%, ${props => props.theme.colors.accent}30 100%);
+  background: linear-gradient(135deg, ${props => {
+    // Different colors for pets vs people
+    if (props.$isPet) {
+      return '#f59e0b15 0%, #f59e0b30 100%' // Amber gradient for pets
+    }
+    // Gender-based colors with fallback
+    if (props.$gender === 'M') {
+      return `${props.theme.colors.accent}15 0%, ${props.theme.colors.accent}30 100%`
+    }
+    if (props.$gender === 'F') {
+      return '#ec489915 0%, #ec489930 100%' // Pink gradient for females
+    }
+    // Unknown/other gender - purple/grey
+    return '#8b5cf615 0%, #8b5cf630 100%'
+  }});
   display: flex;
   align-items: center;
   justify-content: center;
   color: ${props => props.theme.colors.text.secondary};
   font-size: ${props => props.theme.typography.sizes['2xl']};
   font-weight: ${props => props.theme.typography.weights.bold};
+`
+
+const LocationIcon = styled(MapPin)`
+  width: 14px;
+  height: 14px;
+  color: ${props => props.theme.colors.text.secondary};
+  margin-right: 0.25rem;
+  flex-shrink: 0;
+`
+
+const LocationText = styled.span`
+  font-size: ${props => props.theme.typography.sizes.xs};
+  color: ${props => props.theme.colors.text.secondary};
+  display: flex;
+  align-items: center;
+  margin-top: 0.25rem;
+`
+
+const PetIcon = styled(PawPrint)`
+  width: 48px;
+  height: 48px;
+  color: ${props => props.theme.colors.text.secondary};
+  opacity: 0.6;
 `
 
 /**
@@ -131,6 +174,7 @@ function PersonNode({ data, selected }) {
     name, 
     firstName, 
     lastName, 
+    maidenName,
     dob, 
     dod, 
     isDeceased, 
@@ -139,8 +183,15 @@ function PersonNode({ data, selected }) {
     personId,
     treeId,
     relationshipLabel,
-    familyColor
+    familyColor,
+    currentLocation,
+    isPet,
+    gender,
+    zoomLevel = 1
   } = data || {}
+
+  // Hide text when zoomed out too far (below 0.3 zoom)
+  const hideText = zoomLevel < 0.3
 
   // Format dates for display
   const formatDate = (dateString) => {
@@ -201,8 +252,11 @@ function PersonNode({ data, selected }) {
     window.location.href = profileUrl
   }
 
-  // Get initials for default image
+  // Get initials for default image (or paw icon for pets)
   const getInitials = () => {
+    if (isPet) {
+      return null // Will show paw icon instead
+    }
     if (firstName && lastName) {
       return `${firstName[0]}${lastName[0]}`.toUpperCase()
     }
@@ -219,6 +273,15 @@ function PersonNode({ data, selected }) {
     return '?'
   }
 
+  // Format name with maiden name
+  const getDisplayName = () => {
+    if (!name) return 'Unknown'
+    if (maidenName && !isPet) {
+      return `${name} (${maidenName})`
+    }
+    return name
+  }
+
   // Provide default familyColor if missing
   const safeFamilyColor = familyColor || null
 
@@ -227,10 +290,11 @@ function PersonNode({ data, selected }) {
       <NodeContainer 
         $isSelected={selected}
         $familyColor={safeFamilyColor}
+        $isPet={isPet}
         onClick={handleClick}
         role="button"
         tabIndex={0}
-        aria-label={`View ${name}'s profile`}
+        aria-label={`View ${getDisplayName()}'s profile${isPet ? ' (Pet)' : ''}`}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
@@ -261,8 +325,16 @@ function PersonNode({ data, selected }) {
             }}
           />
         ) : null}
-        <DefaultImage style={{ display: portraitImage && portraitImage !== '/portrait.png' ? 'none' : 'flex' }}>
-          {getInitials()}
+        <DefaultImage 
+          style={{ display: portraitImage && portraitImage !== '/portrait.png' ? 'none' : 'flex' }}
+          $isPet={isPet}
+          $gender={gender}
+        >
+          {isPet ? (
+            <PetIcon />
+          ) : (
+            getInitials()
+          )}
         </DefaultImage>
         {isDeceased && (
           <ImageOverlay>
@@ -272,8 +344,8 @@ function PersonNode({ data, selected }) {
       </ImageWrapper>
 
       <Content>
-        <Name>{name}</Name>
-        <Dates>
+        <Name $hideText={hideText}>{getDisplayName()}</Name>
+        <Dates $hideText={hideText}>
           {birthDate && deathDate ? (
             <>
               {birthDate} - {deathDate}
@@ -289,7 +361,13 @@ function PersonNode({ data, selected }) {
             </>
           ) : null}
         </Dates>
-        {relationshipLabel && (
+        {currentLocation && !hideText && (
+          <LocationText>
+            <LocationIcon />
+            {currentLocation}
+          </LocationText>
+        )}
+        {relationshipLabel && !hideText && (
           <RelationshipBadge>{relationshipLabel}</RelationshipBadge>
         )}
       </Content>

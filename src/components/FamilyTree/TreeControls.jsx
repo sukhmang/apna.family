@@ -220,7 +220,7 @@ export default function TreeControls({
           disabled={!selectedPersonId}
           title={!selectedPersonId ? 'Select a person first to see relationships' : ''}
         >
-          Indian
+          Punjabi
         </ToggleButton>
       </ControlGroup>
 

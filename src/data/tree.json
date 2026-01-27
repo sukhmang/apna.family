@@ -1,8 +1,29 @@
 {
     "meta": {
-      "version": "2.0",
-      "description": "Apna Family Network Tree Data",
-      "lastUpdated": "2026-01-26"
+        "version": "2.0",
+        "description": "Apna Family Network Tree Data",
+        "lastUpdated": "2026-01-26"
+    },
+    "families": {
+        "grewal": {
+            "label": "The Grewal Family",
+            "head": "ranjit_singh_grewal"
+        },
+        "mann": {
+            "label": "The Mann Family",
+            "head": "charanjit_mann"
+        },
+        "fann": {
+            "label": "The Fann Family",
+            "head": "michael_fann"
+        },
+        "wong": {
+            "label": "The Wong Family",
+            "head": "steve_wong"
+        },
+        "virk": {
+            "label": "The Virk Family"
+        }
     },
     "people": [
       {

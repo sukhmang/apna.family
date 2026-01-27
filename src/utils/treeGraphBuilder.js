@@ -54,6 +54,9 @@ export async function buildGraphFromTree(people, loadImages = false) {
     // Get family color for visual distinction
     const familyColor = getFamilyColorSync(familyId)
 
+    // Determine if this is a pet
+    const isPet = person.type === 'pet'
+    
     // Node data structure for React Flow
     const nodeData = {
       id: person.id, // Use tree ID as node ID (e.g., "baljit_grewal")
@@ -66,12 +69,15 @@ export async function buildGraphFromTree(people, loadImages = false) {
         name: fullName,
         firstName: person.firstName,
         lastName: person.lastName,
-        gender: person.gender,
+        maidenName: person.maidenName || null,
+        gender: person.gender || 'Unknown',
         dob: person.dob,
         dod: person.dod,
         isDeceased: person.isDeceased === true,
+        currentLocation: person.currentLocation || null,
         portraitImage: portraitImage,
         hasFullProfile: person.hasFullProfile === true,
+        isPet: isPet,
         // Family color for visual distinction
         familyColor: familyColor,
         // Store full person data for relationship calculations
