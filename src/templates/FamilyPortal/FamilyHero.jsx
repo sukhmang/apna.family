@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { Link } from 'react-router-dom'
 import { useFamily } from '../../contexts/FamilyContext'
-import { loadPersonData } from '../../utils/dataLoader'
+import { getFamilyPeopleFromTree } from '../../utils/treeLoader'
+import { parseTreeId } from '../../utils/treeUtils'
 import { withMinimumDelay } from '../../utils/loadingDelay'
 
 const Container = styled.div`
@@ -71,44 +72,36 @@ export default function FamilyHero({ familyData }) {
       return
     }
 
-    // Load people for this family
-    // We'll scan for files matching {familyId}-{personId}.json pattern
-    // For now, we'll use a known list, but this could be made dynamic
+    // Load people for this family from tree.json (master directory)
     const loadPeople = async () => {
-      // Known people for each family (can be expanded)
-      // To add a new person, create src/data/people/{familyId}-{personId}.json and add the personId here
-      const knownPeople = {
-        'grewal': ['baljit'],
-        'wong': ['jane'] // Add person IDs as they're created
-      }
-
-      const peopleList = []
-      const personIds = knownPeople[familyId] || []
-
-      // Load all people data
-      const loadPromises = personIds.map(async (personId) => {
-        try {
-          const personData = await loadPersonData(familyId, personId)
+      try {
+        // Get all people for this family from tree.json
+        const familyPeople = await getFamilyPeopleFromTree(familyId)
+        
+        // Convert tree entries to display format
+        const peopleList = familyPeople.map(person => {
+          const { personId } = parseTreeId(person.id)
+          const fullName = `${person.firstName} ${person.lastName}`.trim()
+          
           return {
-            id: personId,
-            name: personData.memorialData?.name || `${personId} ${familyId}`
+            id: personId, // Use personId for routing (e.g., "baljit")
+            treeId: person.id, // Keep tree ID for reference (e.g., "baljit_grewal")
+            name: fullName,
+            hasFullProfile: person.hasFullProfile === true,
+            isDeceased: person.isDeceased === true
           }
-        } catch (error) {
-          // Person file doesn't exist, skip it
-          console.warn(`Person ${familyId}-${personId} not found, skipping`)
-          return null
-        }
-      })
+        })
 
-      // Wait for all loads with minimum delay
-      const results = await Promise.all(loadPromises)
-      const validPeople = results.filter(p => p !== null)
-      
-      // Ensure minimum delay for smooth animations
-      await withMinimumDelay(Promise.resolve(validPeople), 1000)
-      
-      setPeople(validPeople)
-      setLoading(false)
+        // Ensure minimum delay for smooth animations
+        await withMinimumDelay(Promise.resolve(peopleList), 1000)
+        
+        setPeople(peopleList)
+        setLoading(false)
+      } catch (error) {
+        console.error('Failed to load family people:', error)
+        setPeople([])
+        setLoading(false)
+      }
     }
 
     loadPeople()

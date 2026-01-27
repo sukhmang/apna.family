@@ -22,26 +22,27 @@ export const parseGalleryCSV = (csvText) => {
       item[header.trim()] = value.trim()
     })
     
-    // Normalize the data structure
-    if (item.filename || item.url) {
-      items.push({
-        filename: item.filename || item.url,
-        url: item.url || `/images/${item.filename}`,
-        thumbnail: item.thumbnail || item.url || `/images/${item.filename}`,
-        type: item.type || (item.filename?.toLowerCase().endsWith('.gif') ? 'gif' : 'image'),
-        alt: item.alt || item.description || item.caption || item.filename,
-        category: item.category || '',
-        year: item.year || '',
-        tags: item.tags ? item.tags.split(',').map(t => t.trim()) : [],
-        date: item.date || '',
-        // Preserve any additional metadata
-        ...Object.fromEntries(
-          Object.entries(item).filter(([key]) => 
-            !['filename', 'url', 'thumbnail', 'type', 'alt', 'category', 'year', 'tags', 'date'].includes(key)
+      // Normalize the data structure
+      if (item.filename || item.url) {
+        items.push({
+          filename: item.filename || item.url,
+          url: item.url || `/images/${item.filename}`,
+          thumbnail: item.thumbnail || item.url || `/images/${item.filename}`,
+          type: item.type || (item.filename?.toLowerCase().endsWith('.gif') ? 'gif' : 'image'),
+          alt: item.alt || item.description || item.caption || item.filename,
+          category: item.category || '',
+          year: item.year || '',
+          tags: item.tags ? item.tags.split(',').map(t => t.trim()) : [],
+          date: item.date || '',
+          personId: item.personId || item.person_id || null, // Support both personId and person_id
+          // Preserve any additional metadata
+          ...Object.fromEntries(
+            Object.entries(item).filter(([key]) => 
+              !['filename', 'url', 'thumbnail', 'type', 'alt', 'category', 'year', 'tags', 'date', 'personId', 'person_id'].includes(key)
+            )
           )
-        )
-      })
-    }
+        })
+      }
   }
   
   return items

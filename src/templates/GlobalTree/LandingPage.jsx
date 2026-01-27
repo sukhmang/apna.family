@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { loadFamilyData } from '../../utils/dataLoader'
 import { withMinimumDelay } from '../../utils/loadingDelay'
+import { getAllFamilyIdsFromTree } from '../../utils/treeLoader'
 
 const Container = styled.div`
   max-width: 800px;
@@ -63,39 +64,62 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Load all families from data/families/ folder
-    // For now, we'll use a known list, but in the future this could be dynamic
-    // To add a new family, create src/data/families/{familyId}.json and add the ID here
-    const knownFamilies = ['grewal', 'wong'] // Can be expanded as more families are added
-    
+    // Load all families dynamically from tree.json
+    // This discovers all unique families from the master directory
     const loadFamilies = async () => {
-      const familyList = []
-      
-      // Load all families
-      const loadPromises = knownFamilies.map(async (familyId) => {
-        try {
-          const familyData = await loadFamilyData(familyId)
-          return {
-            id: familyId,
-            name: familyData.displayName || familyData.name || `${familyId} Family`,
-            ...familyData
-          }
-        } catch (error) {
-          // Family file doesn't exist, skip it
-          console.warn(`Family ${familyId} not found, skipping`)
-          return null
+      try {
+        // Get all unique family IDs from tree.json
+        const familyIds = await getAllFamilyIdsFromTree()
+        
+        if (familyIds.length === 0) {
+          setFamilies([])
+          setLoading(false)
+          return
         }
-      })
 
-      // Wait for all loads with minimum delay
-      const results = await Promise.all(loadPromises)
-      const validFamilies = results.filter(f => f !== null)
-      
-      // Ensure minimum delay for smooth animations
-      await withMinimumDelay(Promise.resolve(validFamilies), 1000)
-      
-      setFamilies(validFamilies)
-      setLoading(false)
+        // Load family data for each family ID
+        // Try to load from families/ folder, but if it doesn't exist, create a default entry
+        const loadPromises = familyIds.map(async (familyId) => {
+          try {
+            const familyData = await loadFamilyData(familyId)
+            return {
+              id: familyId,
+              name: familyData.displayName || familyData.name || `${familyId.charAt(0).toUpperCase() + familyId.slice(1)} Family`,
+              ...familyData
+            }
+          } catch (error) {
+            // Family file doesn't exist, create a default entry from the family ID
+            // This allows families to appear even without a config file
+            const displayName = familyId
+              .split('_')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ') + ' Family'
+            
+            return {
+              id: familyId,
+              name: displayName,
+              displayName: displayName
+            }
+          }
+        })
+
+        // Wait for all loads with minimum delay
+        const results = await Promise.all(loadPromises)
+        const validFamilies = results.filter(f => f !== null)
+        
+        // Sort families alphabetically by name
+        validFamilies.sort((a, b) => a.name.localeCompare(b.name))
+        
+        // Ensure minimum delay for smooth animations
+        await withMinimumDelay(Promise.resolve(validFamilies), 1000)
+        
+        setFamilies(validFamilies)
+        setLoading(false)
+      } catch (error) {
+        console.error('Failed to load families:', error)
+        setFamilies([])
+        setLoading(false)
+      }
     }
     
     loadFamilies()

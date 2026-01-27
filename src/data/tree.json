@@ -26,8 +26,6 @@
         "parents": ["michael_fann", "audrey_fann"],
         "children": []
       },
-      
-      // --- GREWAL HOUSEHOLD (IMMEDIATE) ---
       {
         "id": "baljit_grewal",
         "firstName": "Baljit",
@@ -80,8 +78,6 @@
         "parents": ["baljit_grewal", "renu_grewal"],
         "children": []
       },
-  
-      // --- FANN FAMILY (IN-LAWS) ---
       {
         "id": "michael_fann",
         "firstName": "Michael",
@@ -137,8 +133,6 @@
         "parents": ["michael_fann", "audrey_fann"],
         "children": []
       },
-  
-      // --- GREWAL ANCESTORS & EXTENDED ---
       {
         "id": "ranjit_singh_grewal",
         "firstName": "Ranjit Singh",
@@ -259,8 +253,6 @@
         "parents": ["ritu_randhawa"],
         "children": []
       },
-  
-      // --- MANN ANCESTORS & EXTENDED (Maternal) ---
       {
         "id": "charanjit_mann",
         "firstName": "Charanjit",

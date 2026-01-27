@@ -146,9 +146,10 @@ async function updateGalleryCSV() {
     // Read existing CSV
     const { headers, rows: existingRows } = readCSV();
     
-    // Ensure required headers exist
+    // Ensure required headers exist (personId is optional)
     const requiredHeaders = ['filename', 'type', 'alt', 'category', 'year', 'date', 'tags', 'default_sort'];
-    const allHeaders = [...new Set([...requiredHeaders, ...headers])];
+    const optionalHeaders = ['personId']; // Optional: associates images with specific people
+    const allHeaders = [...new Set([...requiredHeaders, ...optionalHeaders, ...headers])];
     
     // Get all local files in images directory
     const files = fs.readdirSync(IMAGES_DIR);
