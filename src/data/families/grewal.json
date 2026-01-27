@@ -1,0 +1,12 @@
+{
+  "id": "grewal",
+  "name": "Grewal Family",
+  "displayName": "The Grewals",
+  "theme": {
+    "primaryColor": "#2563eb",
+    "accentColor": "#3b82f6",
+    "accentHover": "#1d4ed8"
+  },
+  "homeVideosPassword": null,
+  "description": "A family network celebrating the lives and memories of the Grewal family."
+}

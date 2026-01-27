@@ -6,7 +6,8 @@
  * Updates images.json to match the files and order from gallery.csv
  * Files are ordered by default_sort value (ascending)
  * 
- * Usage: node scripts/sync-images-json-from-csv.js
+ * Usage: node scripts/sync-images-json-from-csv.js --family=grewal
+ *    or: node scripts/sync-images-json-from-csv.js (defaults to 'grewal')
  */
 
 import fs from 'fs';
@@ -16,8 +17,13 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const GALLERY_CSV = path.join(__dirname, '..', 'public', 'gallery.csv');
-const IMAGES_JSON = path.join(__dirname, '..', 'public', 'images', 'images.json');
+// Parse command line arguments for --family parameter
+const args = process.argv.slice(2);
+const familyArg = args.find(arg => arg.startsWith('--family='));
+const familyId = familyArg ? familyArg.split('=')[1] : 'grewal'; // Default to 'grewal'
+
+const GALLERY_CSV = path.join(__dirname, '..', 'public', 'images', familyId, 'gallery.csv');
+const IMAGES_JSON = path.join(__dirname, '..', 'public', 'images', familyId, 'images.json');
 
 // Parse CSV line (handles quoted fields)
 function parseCSVLine(line) {
@@ -44,6 +50,8 @@ function parseCSVLine(line) {
 
 function syncImagesJsonFromCSV() {
   try {
+    console.log(`📁 Processing family: ${familyId}`);
+    
     if (!fs.existsSync(GALLERY_CSV)) {
       console.error(`❌ Error: gallery.csv not found at ${GALLERY_CSV}`);
       process.exit(1);

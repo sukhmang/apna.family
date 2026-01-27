@@ -9,8 +9,9 @@
  * - Preserves existing sort order within each group if possible
  * - Can be run anytime to re-sort the gallery
  * 
- * Usage: node scripts/sort-gallery-csv.js
- *    or: npm run sort-gallery-csv
+ * Usage: node scripts/sort-gallery-csv.js --family=grewal
+ *    or: npm run sort-gallery-csv --family=grewal
+ *    or: node scripts/sort-gallery-csv.js (defaults to 'grewal')
  */
 
 import fs from 'fs';
@@ -20,7 +21,12 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const GALLERY_CSV = path.join(__dirname, '..', 'public', 'gallery.csv');
+// Parse command line arguments for --family parameter
+const args = process.argv.slice(2);
+const familyArg = args.find(arg => arg.startsWith('--family='));
+const familyId = familyArg ? familyArg.split('=')[1] : 'grewal'; // Default to 'grewal'
+
+const GALLERY_CSV = path.join(__dirname, '..', 'public', 'images', familyId, 'gallery.csv');
 
 const VIDEO_PRIORITY_RANGE = 150; // Videos appear in first 150 positions
 
@@ -222,6 +228,7 @@ function sortGalleryCSV() {
     writeCSV(headers, allRows);
 
     // Report results
+    console.log(`📁 Processing family: ${familyId}`);
     console.log(`✅ Successfully sorted gallery.csv`);
     console.log(`   Videos: ${videos.length} (assigned to positions 1-${VIDEO_PRIORITY_RANGE})`);
     console.log(`   Images: ${images.length} (${imagesForFirst120} in positions 1-${VIDEO_PRIORITY_RANGE}, ${imagesForAfter120} in positions ${imageStartSort}+)`);
