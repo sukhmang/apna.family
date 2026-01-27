@@ -15,19 +15,6 @@ const Container = styled.div`
   text-align: center;
 `
 
-const Title = styled.h1`
-  font-size: ${props => props.theme.typography.sizes['3xl']};
-  font-weight: ${props => props.theme.typography.weights.bold};
-  color: ${props => props.theme.colors.text.primary};
-  margin-bottom: 1rem;
-`
-
-const Subtitle = styled.p`
-  font-size: ${props => props.theme.typography.sizes.lg};
-  color: ${props => props.theme.colors.text.secondary};
-  margin-bottom: 3rem;
-`
-
 const FamilyList = styled.div`
   display: flex;
   flex-direction: column;
@@ -199,8 +186,6 @@ export default function LandingPage() {
       <>
         <Navbar />
         <Container>
-          <Title>Apna Family Network</Title>
-          <Subtitle>Connecting families through shared memories and stories</Subtitle>
           <LoadingText>Loading families...</LoadingText>
         </Container>
       </>
@@ -211,9 +196,6 @@ export default function LandingPage() {
     <>
       <Navbar />
       <Container>
-        <Title>Apna Family Network</Title>
-        <Subtitle>Connecting families through shared memories and stories</Subtitle>
-        
         <TreeControls
         selectedPersonId={selectedPersonId}
         onPersonSelect={handlePersonSelect}
