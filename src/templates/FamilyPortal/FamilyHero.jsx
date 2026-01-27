@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { Link } from 'react-router-dom'
 import { useFamily } from '../../contexts/FamilyContext'
 import { loadPersonData } from '../../utils/dataLoader'
+import { withMinimumDelay } from '../../utils/loadingDelay'
 
 const Container = styled.div`
   max-width: 800px;
@@ -84,20 +85,29 @@ export default function FamilyHero({ familyData }) {
       const peopleList = []
       const personIds = knownPeople[familyId] || []
 
-      for (const personId of personIds) {
+      // Load all people data
+      const loadPromises = personIds.map(async (personId) => {
         try {
           const personData = await loadPersonData(familyId, personId)
-          peopleList.push({
+          return {
             id: personId,
             name: personData.memorialData?.name || `${personId} ${familyId}`
-          })
+          }
         } catch (error) {
           // Person file doesn't exist, skip it
           console.warn(`Person ${familyId}-${personId} not found, skipping`)
+          return null
         }
-      }
+      })
 
-      setPeople(peopleList)
+      // Wait for all loads with minimum delay
+      const results = await Promise.all(loadPromises)
+      const validPeople = results.filter(p => p !== null)
+      
+      // Ensure minimum delay for smooth animations
+      await withMinimumDelay(Promise.resolve(validPeople), 1000)
+      
+      setPeople(validPeople)
       setLoading(false)
     }
 

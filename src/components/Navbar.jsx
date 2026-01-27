@@ -521,8 +521,12 @@ export default function Navbar() {
     // If on family subdomain, add family link
     if (!isRoot && familyId) {
       const familyUrl = `${protocol}//${familyId}.${currentHost.includes('.localhost') ? 'localhost' : (currentHost.includes('.') ? currentHost.split('.').slice(-2).join('.') : currentHost)}${port ? `:${port}` : ''}`
+      // Use formatted name if available, otherwise capitalize familyId
+      const familyDisplayName = familyData?.displayName || 
+                               familyData?.name || 
+                               (familyId ? familyId.charAt(0).toUpperCase() + familyId.slice(1) + ' Family' : 'Family')
       crumbs.push({
-        label: familyData?.displayName || familyData?.name || `${familyId} Family`,
+        label: familyDisplayName,
         href: familyUrl
       })
 

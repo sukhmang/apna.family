@@ -200,3 +200,133 @@ The domain uses **Custom Nameservers** to give Vercel full control over subdomai
 * **Lazy Loading:** Images load 50px before entering viewport.
 * **Video Cap:** Grid videos are capped at 480p/Economy quality via Cloudinary URL transforms to save user data plans (1GB -> 60MB).
 * **Smart Playback:** Videos pause automatically when scrolled out of view.
+
+---
+
+## 🔄 Loading States & User Experience
+
+The application uses a **hybrid loading pattern** to provide smooth transitions and prevent content flashes:
+
+### Loading Strategy
+
+1. **Skeleton Loaders** (Content Loading)
+   - Used when data is being fetched (family data, person data, etc.)
+   - Skeleton components match the final layout structure
+   - Located in `src/components/Skeletons/`
+   - Provides visual feedback and prevents layout shifts
+
+2. **Navigation Overlay** (Route Transitions)
+   - Light blur overlay during route changes
+   - Prevents FOUC (Flash of Unstyled Content)
+   - Located in `src/components/NavigationLoader.jsx`
+   - Only shows during actual navigation (not initial load)
+
+### Minimum Loading Delay
+
+All data loading operations use the `withMinimumDelay` utility to ensure animations are visible:
+
+```javascript
+import { withMinimumDelay } from '../utils/loadingDelay'
+
+// Ensures minimum 1 second delay for smooth animations
+withMinimumDelay(loadFamilyData(familyId), 1000)
+  .then(data => {
+    setFamilyData(data)
+    setLoading(false)
+  })
+```
+
+**Why?** Even when data loads instantly, the minimum delay allows:
+- Skeleton animations to be visible
+- Smooth fade transitions
+- Better perceived performance
+- No jarring content flashes
+
+### Implementation Standards
+
+**Always use `withMinimumDelay` for:**
+- Context data loading (`FamilyContext`, `PersonContext`)
+- Component-level data fetching
+- Any async operation that shows loading state
+
+**Skeleton Components:**
+- Must match the final component layout
+- Use shimmer animation for visual feedback
+- Located in `src/components/Skeletons/`
+- Named: `{ComponentName}Skeleton.jsx`
+
+**Navigation Loader:**
+- Automatically handles route transitions
+- No manual implementation needed
+- Integrated at the root level in `App.jsx`
+
+---
+
+## 📐 Development Standards
+
+### Component Structure
+
+1. **Templates** (`src/templates/`)
+   - Page-level components that compose smaller pieces
+   - Use Context hooks for data (no prop drilling)
+   - Handle loading states with skeletons
+
+2. **Components** (`src/components/`)
+   - Reusable UI elements
+   - Context-aware when needed (e.g., `Navbar`)
+   - Styled with Styled Components
+
+3. **Contexts** (`src/contexts/`)
+   - Provide data to components
+   - Always include `loading` and `error` states
+   - Use `withMinimumDelay` for data fetching
+
+### Data Loading Pattern
+
+```javascript
+// ✅ CORRECT: Use withMinimumDelay
+useEffect(() => {
+  withMinimumDelay(loadData(id), 1000)
+    .then(data => {
+      setData(data)
+      setLoading(false)
+    })
+}, [id])
+
+// ❌ INCORRECT: Direct loading without delay
+useEffect(() => {
+  loadData(id)
+    .then(data => {
+      setData(data)
+      setLoading(false)
+    })
+}, [id])
+```
+
+### Loading State Pattern
+
+```javascript
+// ✅ CORRECT: Show skeleton while loading
+const { loading, data } = useContext()
+
+if (loading) {
+  return <ComponentSkeleton />
+}
+
+return <Component data={data} />
+```
+
+### Styling Standards
+
+- **Styled Components** for all styling
+- **Theme-based** colors (family-specific themes)
+- **Mobile-first** responsive design
+- **Elder-friendly** touch targets (minimum 44px)
+- **Consistent spacing** using theme values
+
+### File Naming
+
+- **Components:** PascalCase (`Profile.jsx`)
+- **Skeletons:** PascalCase with "Skeleton" suffix (`ProfileSkeleton.jsx`)
+- **Utils:** camelCase (`loadingDelay.js`)
+- **Contexts:** PascalCase with "Context" suffix (`FamilyContext.jsx`)

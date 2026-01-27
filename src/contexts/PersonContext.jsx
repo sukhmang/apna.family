@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { useFamily } from './FamilyContext'
 import { loadPersonData } from '../utils/dataLoader'
+import { withMinimumDelay } from '../utils/loadingDelay'
 
 export const PersonContext = createContext(null)
 
@@ -21,8 +22,8 @@ export function PersonProvider({ children, personId }) {
       return
     }
 
-    // Load person data
-    loadPersonData(familyId, personId)
+    // Load person data with minimum delay for smooth animations
+    withMinimumDelay(loadPersonData(familyId, personId), 1000)
       .then(data => {
         setPersonData(data)
         setLoading(false)

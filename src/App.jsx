@@ -6,6 +6,7 @@ import { FamilyProvider } from './contexts/FamilyContext'
 import { PersonProvider } from './contexts/PersonContext'
 import { parseSubdomain, isRootDomain } from './utils/subdomain'
 import OVERRIDES from './overrideRegistry'
+import NavigationLoader from './components/NavigationLoader'
 
 // Templates
 import GlobalTreeLanding from './templates/GlobalTree/LandingPage'
@@ -110,6 +111,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <GlobalStyles />
       <BrowserRouter>
+        <NavigationLoader />
         <RootRoutes />
       </BrowserRouter>
     </ThemeProvider>
