@@ -37,11 +37,11 @@ Use this checklist to verify your OAuth setup is working:
 
 **Must have BOTH:**
 ```
-https://nncmnnwyummsrgosrroy.supabase.co/auth/v1/callback
+https://your-project-id.supabase.co/auth/v1/callback
 http://localhost:5173/auth/callback
 ```
 
-**Important:** The Supabase callback URL (`https://nncmnnwyummsrgosrroy.supabase.co/auth/v1/callback`) is what Google actually redirects to first. You can find this URL in:
+**Important:** The Supabase callback URL (`https://your-project-id.supabase.co/auth/v1/callback`) is what Google actually redirects to first. You can find this URL in:
 - Supabase Dashboard → Authentication → Providers → Google
 - Look for "Callback URL (for OAuth)" - copy that exact URL
 
@@ -116,10 +116,10 @@ When you click "Sign in with Google", you should see:
   - Expected in Google Console: http://localhost:5173/auth/callback
 
 ✅ Supabase Generated OAuth URL:
-  - Full URL: https://nncmnnwyummsrgosrroy.supabase.co/auth/v1/authorize?...
+  - Full URL: https://your-project-id.supabase.co/auth/v1/authorize?...
 
 📋 URL Breakdown:
-  - Base URL: https://nncmnnwyummsrgosrroy.supabase.co/auth/v1/authorize
+  - Base URL: https://your-project-id.supabase.co/auth/v1/authorize
   - Query Params:
     🔴 redirect_uri: http://localhost:5173/auth/callback
 
@@ -160,7 +160,7 @@ In Supabase Dashboard → Authentication → Providers → Google, you'll see:
 
 **Callback URL (for OAuth):**
 ```
-https://nncmnnwyummsrgosrroy.supabase.co/auth/v1/callback
+https://your-project-id.supabase.co/auth/v1/callback
 ```
 
 This is Supabase's callback URL. Google redirects to this first, then Supabase redirects to your app.

@@ -26,10 +26,11 @@ dotenv.config({ path: join(__dirname, '../.env.local') })
 const DEV_URL = process.env.VITE_SUPABASE_URL
 const DEV_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-// For PRD, set these environment variables or update the defaults below
+// For PRD, set these environment variables
 // You can also create .env.prd and load it: dotenv.config({ path: '.env.prd' })
-const PRD_URL = process.env.PRD_SUPABASE_URL || 'https://pikuwdfibqbqynlfrjer.supabase.co'
-const PRD_KEY = process.env.PRD_SERVICE_ROLE_KEY || 'sb_secret_KAEW2k-fMSXhmf-XhnEeMQ_l8MVmiXQ'
+// IMPORTANT: Never hardcode service role keys in source code!
+const PRD_URL = process.env.PRD_SUPABASE_URL
+const PRD_KEY = process.env.PRD_SERVICE_ROLE_KEY
 
 if (!DEV_URL || !DEV_KEY) {
   console.error('❌ Missing DEV credentials in .env.local')

@@ -15,7 +15,7 @@ If you're getting `Error 400: redirect_uri_mismatch`, check these in order:
 - Find your OAuth 2.0 Client ID
 - Check "Authorised redirect URIs" section
 - Must have BOTH:
-  - `https://nncmnnwyummsrgosrroy.supabase.co/auth/v1/callback` (Supabase's callback - **REQUIRED**)
+  - `https://your-project-id.supabase.co/auth/v1/callback` (Supabase's callback - **REQUIRED**)
   - `http://localhost:5173/auth/callback` (Your app's callback - for local dev)
 
 **Supabase Dashboard:**
@@ -153,7 +153,7 @@ When you click "Sign in with Google", you should see in the console:
   - Current origin: http://localhost:5173
   - Redirect URI: http://localhost:5173/auth/callback
   - Full URL: http://localhost:5173/
-  - Supabase OAuth URL: https://nncmnnwyummsrgosrroy.supabase.co/auth/v1/authorize?...
+  - Supabase OAuth URL: https://your-project-id.supabase.co/auth/v1/authorize?...
   - Redirect URI sent to Google: http://localhost:5173/auth/callback
   - ⚠️  Does this match your Google Cloud Console config?
 ```

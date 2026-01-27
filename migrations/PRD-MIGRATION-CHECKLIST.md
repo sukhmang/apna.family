@@ -34,10 +34,12 @@ AND tablename IN ('families', 'people', 'user_permissions');
 **Action:**
 1. Update `.env.local` to point to **PRD**:
    ```env
-   VITE_SUPABASE_URL=https://pikuwdfibqbqynlfrjer.supabase.co
-   VITE_SUPABASE_ANON_KEY=sb_publishable_TYMRr3QAcdNozjXG96tMrQ_Vn32hrh6
-   SUPABASE_SERVICE_ROLE_KEY=sb_secret_KAEW2k-fMSXhmf-XhnEeMQ_l8MVmiXQ
+   VITE_SUPABASE_URL=https://your-prd-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your_prd_anon_key_here
+   SUPABASE_SERVICE_ROLE_KEY=your_prd_service_role_key_here
    ```
+   
+   **⚠️ Security Note:** Get these values from your PRD Supabase Dashboard → Settings → API. Never commit actual keys to git.
 2. Run migration script:
    ```bash
    npm run migrate-to-supabase
@@ -167,10 +169,12 @@ After PRD migration is complete:
 
 1. Update `.env.local` back to **DEV**:
    ```env
-   VITE_SUPABASE_URL=https://nncmnnwyummsrgosrroy.supabase.co
-   VITE_SUPABASE_ANON_KEY=sb_publishable_aBOGU9Br0tC3eWf2r3sNpA_pKYa7otZ
-   SUPABASE_SERVICE_ROLE_KEY=sb_secret_tikaOHA76gIqiLTtiu3qiw_r1eJOBld
+   VITE_SUPABASE_URL=https://your-dev-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your_dev_anon_key_here
+   SUPABASE_SERVICE_ROLE_KEY=your_dev_service_role_key_here
    ```
+   
+   **⚠️ Security Note:** Get these values from your DEV Supabase Dashboard → Settings → API. Never commit actual keys to git.
 
 ---
 
