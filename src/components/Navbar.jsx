@@ -693,12 +693,14 @@ export default function Navbar() {
                 <BrandName>Apna Family</BrandName>
               </BrandLogo>
             )}
-            <BreadcrumbLeft>
-              <BreadcrumbLink href="/">
-                <Home />
-                Home
-              </BreadcrumbLink>
-            </BreadcrumbLeft>
+            {!isRootDomain() && (
+              <BreadcrumbLeft>
+                <BreadcrumbLink href="/">
+                  <Home />
+                  Home
+                </BreadcrumbLink>
+              </BreadcrumbLeft>
+            )}
             <UserMenu />
           </BreadcrumbSection>
         )}
