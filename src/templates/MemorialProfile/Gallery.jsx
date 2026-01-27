@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import styled from 'styled-components'
 import { Images, Play, Image, Video, Mail, MessageCircle, ChevronDown } from 'lucide-react'
 import { useFamily } from '../../contexts/FamilyContext'
+import { usePerson } from '../../contexts/PersonContext'
 import Lightbox from '../../components/Lightbox'
 
 // Utility function to generate optimized Cloudinary URLs
@@ -625,6 +626,7 @@ function LazyVideo({ src, gridUrl, thumbnail, alt }) {
 
 export default function Gallery() {
   const { familyId } = useFamily()
+  const { personId } = usePerson()
   const [galleryItems, setGalleryItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -674,12 +676,87 @@ export default function Gallery() {
   useEffect(() => {
     const loadGalleryData = async () => {
       try {
+        // Load gallery.csv to get personId associations
+        let personIdMap = new Map()
+        try {
+          const csvResponse = await fetch(`/images/${familyId}/gallery.csv`)
+          const csvText = await csvResponse.text()
+          
+          // Parse CSV to get personId associations (using proper CSV parsing)
+          const lines = csvText.split('\n').filter(line => line.trim())
+          if (lines.length > 0) {
+            // CSV line parser (handles quoted fields)
+            const parseCSVLine = (line) => {
+              const result = []
+              let current = ''
+              let inQuotes = false
+              
+              for (let i = 0; i < line.length; i++) {
+                const char = line[i]
+                const nextChar = line[i + 1]
+                
+                if (char === '"') {
+                  if (inQuotes && nextChar === '"') {
+                    // Escaped quote
+                    current += '"'
+                    i++
+                  } else {
+                    // Toggle quote state
+                    inQuotes = !inQuotes
+                  }
+                } else if (char === ',' && !inQuotes) {
+                  result.push(current.trim())
+                  current = ''
+                } else {
+                  current += char
+                }
+              }
+              result.push(current.trim())
+              return result
+            }
+
+            const headers = parseCSVLine(lines[0])
+            const filenameIndex = headers.indexOf('filename')
+            const personIdIndex = headers.indexOf('personId')
+            
+            // Create a map of filename -> personId
+            for (let i = 1; i < lines.length; i++) {
+              const values = parseCSVLine(lines[i])
+              if (values.length === 0) continue
+              
+              const filename = filenameIndex >= 0 ? values[filenameIndex] : null
+              const itemPersonId = personIdIndex >= 0 ? (values[personIdIndex] || '').trim() : null
+              if (filename) {
+                personIdMap.set(filename, itemPersonId || null)
+              }
+            }
+          }
+        } catch (csvError) {
+          // CSV might not exist or have personId column - that's okay, continue without filtering
+          console.log('Could not load gallery.csv for personId filtering:', csvError)
+        }
+
+        // Load images.json
         const response = await fetch(`/images/${familyId}/images.json`)
         const imageList = await response.json()
         
+        // Filter by personId if on a person page
+        // If personId is provided, show:
+        // 1. Items with matching personId
+        // 2. Items with no personId (family-level items - shared gallery)
+        // If no personId (family page), show all items
+        let filteredList = imageList
+        if (personId && personIdMap.size > 0) {
+          filteredList = imageList.filter(item => {
+            const itemPersonId = personIdMap.get(item) || null
+            // Show if: matches personId OR is family-level (no personId)
+            return itemPersonId === personId || itemPersonId === null || itemPersonId === ''
+          })
+        }
+        
         // Convert filenames/URLs to gallery items
         // Supports both local paths (e.g., "image.jpg") and CDN URLs (e.g., "https://res.cloudinary.com/...")
-        const items = imageList.map((item) => {
+        const items = filteredList.map((item) => {
           // Check if it's a CDN URL or local filename
           const isUrl = item.startsWith('http://') || item.startsWith('https://')
           
@@ -751,7 +828,7 @@ export default function Gallery() {
     }
 
     loadGalleryData()
-  }, [])
+  }, [familyId, personId])
 
   // Filter items based on selected filter
   const filteredItems = useMemo(() => {

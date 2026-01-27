@@ -1,413 +1,560 @@
-# Implementation Plan: Single-Tenant to Multi-Tenant Migration
+# Family Tree Visualization Implementation Plan
 
-**Goal:** Refactor the Baljit Grewal memorial site into a scalable, multi-tenant family network (Apna Family) that supports multiple families via subdomains.
+## Overview
 
-**Success Criteria:**
-1. ✅ Root landing (`localhost:5173`) loads a generic "Family Tree Network" page with links to families
-2. ✅ Family portal (`grewal.localhost:5173`) loads a specific landing page for that family
-3. ✅ Person profile (`grewal.localhost:5173/baljit`) successfully migrates the existing Baljit site
-4. ✅ Video vault (`grewal.localhost:5173/homevideos`) serves family-specific video data
+This document outlines the implementation plan for replacing the simple family list views with an interactive family tree visualization. The tree will support both a **visual tree view** and a **simple list view** (toggleable), and will work on both the main landing page (all families) and individual family pages.
 
 ---
 
-## Milestone 1: Scaffolding & Data Extraction
-**Goal:** Create the new folder structure and extract all hardcoded data from components into JSON files.
+## 1. Architecture & Technology Stack
 
-### Tasks:
-1. **Create new directory structure:**
-   - `src/data/families/` - Family-level configuration
-   - `src/data/people/` - Person-level memorial data
-   - `src/templates/` - Page template components
-   - `src/templates/GlobalTree/` - Root landing page
-   - `src/templates/FamilyPortal/` - Family landing pages
-   - `src/templates/MemorialProfile/` - Memorial site template
-   - `src/templates/VideoVault/` - Home videos template
-   - `src/utils/` - Utility functions (if not exists)
+### Core Library: React Flow
+**Why React Flow:**
+- Industry standard for interactive node-based UIs in React
+- Excellent mobile touch support (pinch zoom, pan)
+- Fully customizable nodes (we can build our own `<PersonNode />` component)
+- Handles zooming, panning, and connecting lines automatically
+- Free (MIT License)
 
-2. **Extract data from `src/constants.js`:**
-   - Create `src/data/people/grewal-baljit.json` with:
-     - `MEMORIAL_DATA` structure (name, dates, portrait, welcome message)
-     - `EVENT_DATA` structure (events, YouTube videos, program)
-   - Create `src/data/families/grewal.json` with:
-     - Family name, theme colors, home videos password (if needed)
-     - Reference to home videos data
-   - Move `HOME_VIDEOS` array to `src/data/people/grewal-baljit.json` (or family-level if shared)
+### Supporting Libraries
+- **`dagre`** or **`@elkjs/core` + `@elkjs/layout`**: Automatic tree layout engine
+  - Calculates node positions so we don't have to manually set x/y coordinates
+  - Handles hierarchical tree structures automatically
+- **`graphlib`**: Path finding for relationship calculations
+  - Finds shortest path between two people in the family graph
+  - Essential for calculating relationships (e.g., "Me -> Father -> Sister = Aunt")
 
-3. **Create utility functions:**
-   - `src/utils/subdomain.js` - Parse hostname to extract family/person IDs
-   - `src/utils/dataLoader.js` - Load JSON data files dynamically
+### Dependencies to Add
+```json
+{
+  "reactflow": "^11.11.0",
+  "dagre": "^0.8.5",
+  "graphlib": "^2.1.9"
+}
+```
 
-4. **Create placeholder templates:**
-   - `src/templates/GlobalTree/LandingPage.jsx` - Simple placeholder
-   - `src/templates/FamilyPortal/FamilyHero.jsx` - Simple placeholder
-   - `src/templates/MemorialProfile/ProfilePage.jsx` - Simple placeholder
-   - `src/templates/VideoVault/VideoGrid.jsx` - Simple placeholder
+---
 
-### Files to Create:
-- `src/data/families/grewal.json`
-- `src/data/people/grewal-baljit.json`
-- `src/utils/subdomain.js`
-- `src/utils/dataLoader.js`
+## 2. Component Structure
+
+### New Components to Create
+
+```
+src/
+├── components/
+│   ├── FamilyTree/
+│   │   ├── FamilyTreeViewer.jsx          # Main tree visualization component
+│   │   ├── PersonNode.jsx                # Custom React Flow node component
+│   │   ├── TreeControls.jsx              # View toggle, user selection, language toggle
+│   │   ├── SimpleListView.jsx            # Fallback simple list view
+│   │   └── TreeSkeleton.jsx               # Loading skeleton for tree
+│   │
+│   └── RelationshipEngine/
+│       ├── relationshipCalculator.js     # Core relationship calculation logic
+│       ├── pathFinder.js                 # Graph path finding utilities
+│       └── relationshipLabels.js         # Indian/English label mappings
+│
+├── utils/
+│   └── treeGraphBuilder.js               # Converts tree.json to React Flow graph format
+```
+
+---
+
+## 3. Implementation Milestones
+
+### Milestone 1: Foundation & Graph Building
+**Goal:** Convert tree.json data into a graph structure that React Flow can render
+
+**Tasks:**
+1. Install dependencies (`reactflow`, `dagre`, `graphlib`)
+2. Create `treeGraphBuilder.js` utility:
+   - Converts `tree.json` people array into React Flow nodes and edges
+   - Handles parent-child relationships
+   - Handles partner/spouse relationships (horizontal connections)
+   - Generates unique node IDs compatible with React Flow
+3. Create basic `FamilyTreeViewer.jsx`:
+   - Loads tree data
+   - Converts to graph format
+   - Renders with React Flow (basic nodes, no customization yet)
+   - Implements dagre layout for automatic positioning
+4. Test with single family (Grewal) first
+
+**Files to Create:**
+- `src/utils/treeGraphBuilder.js`
+- `src/components/FamilyTree/FamilyTreeViewer.jsx`
+
+**Files to Modify:**
+- `package.json` (add dependencies)
+
+---
+
+### Milestone 2: Custom Person Node Component
+**Goal:** Build beautiful, card-like nodes with images and overlays
+
+**Tasks:**
+1. Create `PersonNode.jsx` component:
+   - Card-style design (image + overlay)
+   - Displays: photo, name, dates (dob/dod), age/status
+   - Shows "Deceased" badge if applicable
+   - Clickable to navigate to person's profile page
+   - Responsive sizing for mobile
+2. Integrate with React Flow:
+   - Register as custom node type
+   - Pass person data as `data` prop
+   - Handle node selection/highlighting
+3. Load person images:
+   - Try to load from person's profile data (portraitImage)
+   - Fallback to default portrait
+   - Handle missing images gracefully
+
+**Files to Create:**
+- `src/components/FamilyTree/PersonNode.jsx`
+
+**Files to Modify:**
+- `src/components/FamilyTree/FamilyTreeViewer.jsx`
+
+---
+
+### Milestone 3: Relationship Calculation Engine
+**Goal:** Calculate and display relationship labels (Indian vs English)
+
+**Tasks:**
+1. Create `pathFinder.js`:
+   - Uses `graphlib` to find shortest path between two people
+   - Handles both parent-child and partner relationships
+   - Returns path array (e.g., `['me', 'father', 'sister']`)
+2. Create `relationshipCalculator.js`:
+   - Takes root person and target person
+   - Calculates path using pathFinder
+   - Determines relationship based on path
+   - Handles Indian relationship logic:
+     - Checks paternal vs maternal side
+     - Checks age (for Taiya vs Chacha)
+     - Checks gender
+     - Returns both English and Indian labels
+3. Create `relationshipLabels.js`:
+   - Mapping tables for all relationship types
+   - Indian labels (Taiya, Chacha, Mama, Masi, Phua, etc.)
+   - English labels (Uncle, Aunt, Cousin, etc.)
+4. Integrate into PersonNode:
+   - Add relationship badge/overlay
+   - Only show if user has selected "Who am I?"
+   - Update when language toggle changes
+
+**Files to Create:**
+- `src/components/RelationshipEngine/pathFinder.js`
+- `src/components/RelationshipEngine/relationshipCalculator.js`
+- `src/components/RelationshipEngine/relationshipLabels.js`
+
+**Files to Modify:**
+- `src/components/FamilyTree/PersonNode.jsx`
+
+---
+
+### Milestone 4: User Selection & Controls
+**Goal:** Allow user to select themselves and toggle between views/languages
+
+**Tasks:**
+1. Create `TreeControls.jsx`:
+   - "Who am I?" dropdown/selector
+   - Toggle between "Tree View" and "Simple List View"
+   - Toggle between "Indian Terms" and "English Terms"
+   - Zoom controls (fit to screen, reset zoom)
+   - Mobile-friendly touch controls
+2. Implement user selection state:
+   - Store selected person ID in component state
+   - Pass to relationship calculator
+   - Update all node labels when selection changes
+3. Implement view toggle:
+   - Switch between `FamilyTreeViewer` and `SimpleListView`
+   - Persist preference (localStorage)
+4. Implement language toggle:
+   - Switch between Indian and English relationship labels
+   - Persist preference (localStorage)
+
+**Files to Create:**
+- `src/components/FamilyTree/TreeControls.jsx`
+- `src/components/FamilyTree/SimpleListView.jsx`
+
+**Files to Modify:**
+- `src/components/FamilyTree/FamilyTreeViewer.jsx`
 - `src/templates/GlobalTree/LandingPage.jsx`
 - `src/templates/FamilyPortal/FamilyHero.jsx`
-- `src/templates/MemorialProfile/ProfilePage.jsx`
-- `src/templates/VideoVault/VideoGrid.jsx`
-
-### Files to Modify:
-- `src/constants.js` - Keep for now (backward compatibility), mark as deprecated
-
-### Validation:
-- ✅ All data structures exist in JSON files
-- ✅ Utility functions can parse subdomains correctly
-- ✅ Placeholder templates render without errors
 
 ---
 
-## Milestone 2: Subdomain Routing Logic
-**Goal:** Implement the traffic controller in `App.jsx` that routes based on hostname, with support for custom page overrides.
+### Milestone 5: Main Page Integration (All Families)
+**Goal:** Show family tree on main landing page with all families
 
-### Tasks:
-1. **Create override registry system:**
-   - Create `src/custom/` folder structure for custom page overrides
-   - Create `src/overrideRegistry.js` - Maps custom components for families and people
-   - Structure: `src/custom/{familyId}/{ComponentName}.jsx`
-   - Registry pattern: Check registry first, fall back to template if no override exists
+**Tasks:**
+1. Update `GlobalTree/LandingPage.jsx`:
+   - Replace current simple list with tree viewer
+   - Add view toggle (Tree View / Simple List View)
+   - Load all people from all families
+   - Build unified graph (or separate trees per family)
+   - Handle cross-family relationships (e.g., Christine Grewal connects to Fann family)
+2. Decide on layout strategy:
+   - **Option A:** Single unified tree (all families connected)
+   - **Option B:** Separate trees per family (grouped visually)
+   - **Recommendation:** Start with Option B (easier to understand), allow Option A as advanced view
+3. Add family grouping/coloring:
+   - Visual distinction between families (color coding, borders)
+   - Family name labels/headers
+4. Handle performance:
+   - Large tree optimization (virtualization if needed)
+   - Lazy loading of images
+   - Progressive rendering
 
-2. **Update `App.jsx` routing logic:**
-   - Detect root domain (`localhost:5173` or `apna.family`) → Show GlobalTree
-   - Detect family subdomain (`grewal.localhost:5173` or `grewal.apna.family`) → Show FamilyPortal or MemorialProfile/VideoVault based on path
-   - Parse hostname using `utils/subdomain.js`
-   - **Override check pattern:**
-     - For family pages: Check `OVERRIDES.families[familyId]` first
-     - For person pages: Check `OVERRIDES.people[familyId]?.[personId]` first
-     - Fall back to standard template if no override exists
-   - Route structure:
-     - `/` on root → `<GlobalTree />`
-     - `/` on family subdomain → Check override → `<FamilyPortal />` or custom component
-     - `/{personId}` on family subdomain → Check override → `<MemorialProfile personId={personId} />` or custom component
-     - `/homevideos` on family subdomain → `<VideoVault />` (can add override support later if needed)
-
-3. **Implement subdomain detection:**
-   - Handle `localhost` subdomains (e.g., `grewal.localhost:5173`)
-   - Handle production subdomains (e.g., `grewal.apna.family`)
-   - Extract family ID from hostname
-   - Extract person ID from URL path
-
-4. **Create context/provider (MANDATORY):**
-   - `src/contexts/FamilyContext.jsx` - Provides current family data to all components
-     - Exports `useFamily()` hook for components to access family data (theme colors, family ID, etc.)
-     - Prevents prop drilling through multiple component layers
-   - `src/contexts/PersonContext.jsx` - Provides current person data to memorial pages
-     - Exports `usePerson()` hook for components to access person data (memorial info, events, etc.)
-   - Wrap appropriate routes with context providers in `App.jsx`
-
-### Files to Create:
-- `src/custom/` - Folder structure for custom overrides (empty initially)
-- `src/overrideRegistry.js` - Registry mapping custom components
-- `src/contexts/FamilyContext.jsx` (MANDATORY)
-- `src/contexts/PersonContext.jsx` (MANDATORY)
-
-### Files to Modify:
-- `src/App.jsx` - Complete rewrite of routing logic with override checks
-- `src/utils/subdomain.js` - Implement hostname parsing
-
-### Validation:
-- ✅ Root domain shows GlobalTree placeholder
-- ✅ `grewal.localhost:5173` shows FamilyPortal placeholder (with FamilyContext provider)
-- ✅ `grewal.localhost:5173/baljit` shows MemorialProfile placeholder (with both FamilyContext and PersonContext providers)
-- ✅ `grewal.localhost:5173/homevideos` shows VideoVault placeholder (with FamilyContext provider)
-- ✅ Context providers are correctly wrapped around routes in `App.jsx`
-- ✅ Override registry exists and can be extended for custom pages
-
----
-
-## Milestone 3: Component Refactoring to Templates
-**Goal:** Move existing components into templates and make them data-driven (remove hardcoded constants).
-
-### Tasks:
-1. **Refactor MemorialProfile template:**
-   - Move `src/components/Hero.jsx` → `src/templates/MemorialProfile/Hero.jsx`
-     - Accept `personData` prop instead of importing `MEMORIAL_DATA`
-   - Move `src/components/LivestreamCard.jsx` → `src/templates/MemorialProfile/VideoSection.jsx`
-     - Accept `eventData` prop instead of importing `EVENT_DATA`
-   - Move `src/components/EventDetailsCard.jsx` → `src/templates/MemorialProfile/Events.jsx`
-     - Accept `eventData` prop
-   - Move `src/components/StoriesCard.jsx` → `src/templates/MemorialProfile/Stories.jsx`
-     - Accept `personData` prop (for email subject customization)
-   - Move `src/components/Gallery.jsx` → `src/templates/MemorialProfile/Gallery.jsx`
-     - Use `useFamily()` hook to get `familyId` and load family-specific `images.json`
-   - Move `src/components/Lightbox.jsx` → `src/templates/MemorialProfile/Lightbox.jsx` (or keep in components if shared)
-   - Create `src/templates/MemorialProfile/ProfilePage.jsx`:
-     - Composes all above components
-     - Loads person data via `dataLoader`
-     - Wraps components with `PersonContext.Provider` to make data available via `usePerson()` hook
-     - Child components use `usePerson()` instead of props
-
-2. **Refactor VideoVault template:**
-   - Move `src/components/HomeVideos.jsx` → `src/templates/VideoVault/VideoGrid.jsx`
-     - Use `useFamily()` hook to get `familyId` and load family-specific home videos
-     - Remove direct import of `HOME_VIDEOS` from constants
-
-3. **Refactor shared components:**
-   - `src/components/StickyNav.jsx` → `src/components/Navbar.jsx`
-     - Make it context-aware (different links for root vs family vs person pages)
-     - Use `useFamily()` and `usePerson()` hooks instead of props
-     - Access family theme colors via context for styling
-   - `src/components/Layout.jsx` - Keep as shared component (no changes needed)
-
-4. **Update all component imports:**
-   - Remove all `import { MEMORIAL_DATA, EVENT_DATA, HOME_VIDEOS } from '../constants'`
-   - Replace with prop-based data passing
-
-### Files to Create:
-- `src/templates/MemorialProfile/ProfilePage.jsx`
-- `src/templates/MemorialProfile/Hero.jsx` (moved from components)
-- `src/templates/MemorialProfile/VideoSection.jsx` (moved from components)
-- `src/templates/MemorialProfile/Events.jsx` (moved from components)
-- `src/templates/MemorialProfile/Stories.jsx` (moved from components)
-- `src/templates/MemorialProfile/Gallery.jsx` (moved from components)
-- `src/templates/VideoVault/VideoGrid.jsx` (moved from components)
-
-### Files to Modify:
-- `src/components/Hero.jsx` - Remove, replaced by template version
-- `src/components/LivestreamCard.jsx` - Remove, replaced by template version
-- `src/components/EventDetailsCard.jsx` - Remove, replaced by template version
-- `src/components/StoriesCard.jsx` - Remove, replaced by template version
-- `src/components/Gallery.jsx` - Remove, replaced by template version
-- `src/components/HomeVideos.jsx` - Remove, replaced by template version
-- `src/components/StickyNav.jsx` - Refactor to `Navbar.jsx` with context awareness
-- `src/components/Lightbox.jsx` - Update imports if moved
-
-### Files to Delete (after migration):
-- `src/components/Hero.jsx`
-- `src/components/LivestreamCard.jsx`
-- `src/components/EventDetailsCard.jsx`
-- `src/components/StoriesCard.jsx`
-- `src/components/Gallery.jsx`
-- `src/components/HomeVideos.jsx`
-
-### Validation:
-- ✅ All components use context hooks instead of hardcoded constants
-- ✅ Components use `useFamily()` and `usePerson()` hooks instead of prop drilling
-- ✅ MemorialProfile template loads and displays Baljit's data correctly via context
-- ✅ VideoVault template loads and displays home videos correctly via context
-- ✅ Navigation works correctly on all page types and adapts based on context
-
----
-
-## Milestone 4: Family-Specific Media & Script Updates
-**Goal:** Reorganize media folders by family and update gallery sync scripts to support family-specific paths.
-
-### Tasks:
-1. **Reorganize media structure:**
-   - Move `public/images/` → `public/images/grewal/` (for Grewal family)
-   - Move `public/images/gallery.csv` → `public/images/grewal/gallery.csv`
-   - Move `public/images/images.json` → `public/images/grewal/images.json`
-   - Move `public/images/thumbnails/` → `public/images/grewal/thumbnails/`
-   - Keep `public/images/program/` at root or move to `public/images/grewal/program/`
-   - Keep `public/portrait.png` at root (or move to family-specific if needed)
-
-2. **Update gallery sync scripts:**
-   - Modify `scripts/sync-gallery.js`:
-     - Accept `--family` parameter (e.g., `npm run sync-gallery --family=grewal`)
-     - Default to `grewal` if not specified (for backward compatibility)
-     - Update paths to use `public/images/{family}/`
-   - Modify `scripts/update-gallery-csv.js`:
-     - Accept family parameter
-     - Scan `public/images/{family}/` instead of `public/images/`
-   - Modify `scripts/generate-thumbnails.js`:
-     - Accept family parameter
-     - Generate thumbnails in `public/images/{family}/thumbnails/`
-   - Modify `scripts/sync-images-json-from-csv.js`:
-     - Accept family parameter
-     - Write to `public/images/{family}/images.json`
-   - Modify `scripts/sort-gallery-csv.js`:
-     - Accept family parameter
-     - Sort `public/images/{family}/gallery.csv`
-
-3. **Update Gallery component:**
-   - Modify `src/templates/MemorialProfile/Gallery.jsx`:
-     - Use `useFamily()` hook to get `familyId`
-     - Load `images.json` from `public/images/{familyId}/images.json`
-     - Handle family-specific paths for thumbnails
-
-4. **Update package.json scripts:**
-   - Add family parameter support to all gallery scripts
-   - Example: `"sync-gallery": "node scripts/sync-gallery.js"` → `"sync-gallery": "node scripts/sync-gallery.js --family=grewal"`
-
-### Files to Modify:
-- `scripts/sync-gallery.js`
-- `scripts/update-gallery-csv.js`
-- `scripts/generate-thumbnails.js`
-- `scripts/sync-images-json-from-csv.js`
-- `scripts/sort-gallery-csv.js`
-- `src/templates/MemorialProfile/Gallery.jsx`
-- `package.json` (update script commands)
-
-### Files to Move:
-- `public/images/` → `public/images/grewal/` (all contents)
-- `public/images/gallery.csv` → `public/images/grewal/gallery.csv`
-- `public/images/images.json` → `public/images/grewal/images.json`
-- `public/images/thumbnails/` → `public/images/grewal/thumbnails/`
-
-### Validation:
-- ✅ Gallery sync scripts work with `--family=grewal` parameter
-- ✅ Gallery component loads images from `public/images/grewal/images.json`
-- ✅ Thumbnails load from family-specific paths
-- ✅ All existing media files are accessible after reorganization
-
----
-
-## Milestone 5: New Templates (GlobalTree & FamilyPortal)
-**Goal:** Create the root landing page and family portal templates.
-
-### Tasks:
-1. **Create GlobalTree template:**
-   - `src/templates/GlobalTree/LandingPage.jsx`:
-     - Display "Apna Family Network" heading
-     - List of available families (hardcoded for now: "Grewal", "Wong")
-     - Links to family portals (e.g., `grewal.localhost:5173` or `grewal.apna.family`)
-     - Simple, clean design matching the existing theme
-   - Optional: `src/templates/GlobalTree/NetworkTree.jsx` - Interactive tree visualization (future enhancement)
-
-2. **Create FamilyPortal template:**
-   - `src/templates/FamilyPortal/FamilyHero.jsx`:
-     - Display family name from `families/{familyId}.json`
-     - Welcome message for the family
-     - Links to family members (e.g., "View Baljit's Memorial" → `/baljit`)
-     - Link to "Home Videos" → `/homevideos`
-   - `src/templates/FamilyPortal/FamilyPage.jsx`:
-     - Composes FamilyHero
-     - Loads family data via `dataLoader`
-     - Lists available people in this family (from `data/people/` folder)
-
-3. **Update routing in App.jsx:**
-   - Ensure GlobalTree renders on root domain
-   - Ensure FamilyPortal renders on family subdomain root path
-
-### Files to Create:
+**Files to Modify:**
 - `src/templates/GlobalTree/LandingPage.jsx`
-- `src/templates/GlobalTree/NetworkTree.jsx` (optional, placeholder for future)
+- `src/utils/treeGraphBuilder.js` (add multi-family support)
+
+---
+
+### Milestone 6: Family Page Integration (Single Family)
+**Goal:** Show family tree on individual family pages
+
+**Tasks:**
+1. Update `FamilyPortal/FamilyHero.jsx`:
+   - Replace current simple list with tree viewer
+   - Add view toggle (Tree View / Simple List View)
+   - Load only people from that family
+   - Show family-specific tree
+2. Maintain consistency:
+   - Same controls and features as main page
+   - Same styling and UX
+   - User selection persists across pages (optional enhancement)
+
+**Files to Modify:**
 - `src/templates/FamilyPortal/FamilyHero.jsx`
-- `src/templates/FamilyPortal/FamilyPage.jsx`
-
-### Files to Modify:
-- `src/App.jsx` - Ensure routing connects to new templates
-
-### Validation:
-- ✅ Root domain (`localhost:5173`) shows GlobalTree with family links
-- ✅ Family subdomain root (`grewal.localhost:5173`) shows FamilyPortal
-- ✅ FamilyPortal displays family name and links to person profiles
-- ✅ Navigation works correctly between all pages
 
 ---
 
-## Milestone 6: Testing & Final Migration
-**Goal:** Test all routes, verify data migration, and ensure scripts work correctly.
+### Milestone 7: Mobile Optimization & Polish
+**Goal:** Ensure excellent mobile experience
 
-### Tasks:
-1. **Test all routes:**
-   - ✅ Root: `localhost:5173` → GlobalTree
-   - ✅ Family portal: `grewal.localhost:5173` → FamilyPortal
-   - ✅ Person profile: `grewal.localhost:5173/baljit` → MemorialProfile (Baljit's site)
-   - ✅ Video vault: `grewal.localhost:5173/homevideos` → VideoVault
+**Tasks:**
+1. Mobile-specific optimizations:
+   - Touch gesture handling (pinch zoom, pan)
+   - Node sizing for small screens
+   - Simplified controls on mobile
+   - Performance optimization for large trees
+2. Accessibility:
+   - Keyboard navigation
+   - Screen reader support
+   - ARIA labels
+3. Loading states:
+   - Create `TreeSkeleton.jsx` for loading state
+   - Smooth transitions between views
+4. Error handling:
+   - Graceful fallback if tree fails to load
+   - Error messages for missing data
 
-2. **Verify data migration:**
-   - ✅ All Baljit's data correctly loaded from `src/data/people/grewal-baljit.json`
-   - ✅ Gallery loads from `public/images/grewal/images.json`
-   - ✅ Home videos load from person/family JSON
-   - ✅ Events display correctly
-   - ✅ All images and videos render properly
+**Files to Create:**
+- `src/components/FamilyTree/TreeSkeleton.jsx`
 
-3. **Test gallery scripts:**
-   - ✅ `npm run sync-gallery --family=grewal` works
-   - ✅ Thumbnails generate in correct location
-   - ✅ CSV and JSON files update correctly
-
-4. **Clean up:**
-   - Remove or deprecate `src/constants.js` (or keep as fallback)
-   - Remove old component files if not already deleted
-   - Update README.md with new structure
-   - Add comments/documentation to new templates
-
-5. **Create sample data for second family (optional):**
-   - `src/data/families/wong.json` - Sample Wong family config
-   - `src/data/people/wong-jane.json` - Sample person data
-   - `public/images/wong/` - Empty folder structure
-
-### Files to Modify:
-- `README.md` - Update with new architecture
-- `src/constants.js` - Mark as deprecated or remove
-
-### Files to Create (optional):
-- `src/data/families/wong.json`
-- `src/data/people/wong-jane.json`
-- `public/images/wong/` (empty folder)
-
-### Validation:
-- ✅ All success criteria met:
-  1. Root landing loads GlobalTree
-  2. Family portal loads for Grewal
-  3. Person profile (`/baljit`) works correctly
-  4. Video vault (`/homevideos`) works correctly
-- ✅ No console errors
-- ✅ All images/videos load correctly
-- ✅ Gallery sync scripts work
-- ✅ Navigation works on all pages
+**Files to Modify:**
+- All FamilyTree components
 
 ---
 
-## Post-Migration Checklist
+## 4. Data Flow & State Management
 
-After completing all milestones:
+### State Structure
+```javascript
+{
+  // Tree data
+  treeData: null,              // Raw tree.json data
+  nodes: [],                   // React Flow nodes
+  edges: [],                   // React Flow edges
+  
+  // User preferences
+  selectedPersonId: null,     // "Who am I?" selection
+  useIndianTerms: true,        // Language toggle
+  viewMode: 'tree',           // 'tree' | 'simple'
+  
+  // UI state
+  loading: true,
+  error: null,
+  zoomLevel: 1
+}
+```
 
-- [ ] Test in production-like environment (Vercel preview)
-- [ ] Verify subdomain routing works in production
-- [ ] Update DNS configuration documentation
-- [ ] Create migration guide for adding new families
-- [ ] Document how to add new people to existing families
-- [ ] Test Cloudinary integration with family-specific folders
-- [ ] Verify all scripts work with family parameters
-- [ ] Update deployment documentation
-
----
-
-## Notes & Considerations
-
-1. **Custom Page Overrides:** The architecture supports custom pages that deviate from templates using the Override Registry pattern:
-   - **Standard pages** use templates in `src/templates/`
-   - **Custom pages** go in `src/custom/{familyId}/` and are registered in `src/overrideRegistry.js`
-   - **Router logic** checks registry first, falls back to template if no override exists
-   - **Examples:** `grewal.apna.family/vanita` can be fully custom, while `grewal.apna.family/baljit` uses the template. `wong.apna.family` can be custom, while `wong.apna.family/steve` uses the template.
-   - This keeps templates clean and allows one-off customizations without affecting the core architecture.
-
-2. **Context Providers (MANDATORY):** `FamilyContext` and `PersonContext` are required, not optional. They prevent prop drilling through multiple component layers (App → FamilyPortal → Layout → Navbar → etc.). Components like Navbar and Gallery can simply call `useFamily()` or `usePerson()` to access data without passing props through every layer. This makes the codebase much cleaner and more maintainable.
-
-3. **Backward Compatibility:** Keep `src/constants.js` during migration for safety, remove after validation.
-
-4. **Subdomain Testing:** The user mentioned their local environment supports subdomains natively. Use `window.location.hostname` directly without query parameter workarounds.
-
-5. **Data Structure:** JSON files should match the existing `constants.js` structure exactly to minimize component changes.
-
-6. **Media Migration:** Moving `public/images/` to `public/images/grewal/` is a breaking change. Ensure all references are updated.
-
-7. **Script Compatibility:** Gallery scripts should default to `grewal` family if no parameter provided, ensuring existing workflows continue to work.
-
-8. **Future Enhancements:** The GlobalTree can be enhanced with an interactive D3.js visualization later. For now, a simple list is sufficient.
-
----
-
-## Estimated Timeline
-
-- **Milestone 1:** 2-3 hours (scaffolding, data extraction)
-- **Milestone 2:** 2-3 hours (routing logic + context providers)
-- **Milestone 3:** 4-6 hours (component refactoring)
-- **Milestone 4:** 2-3 hours (media reorganization, script updates)
-- **Milestone 5:** 2-3 hours (new templates)
-- **Milestone 6:** 2-3 hours (testing, cleanup)
-
-**Total:** ~13-20 hours of development time
+### Relationship Calculation Flow
+```
+User selects "Who am I?" (e.g., "sukhman_grewal")
+  ↓
+For each person in tree:
+  ↓
+Calculate path: pathFinder.findPath(selectedPerson, targetPerson)
+  ↓
+Determine relationship: relationshipCalculator.calculate(path, selectedPerson, targetPerson)
+  ↓
+Get labels: relationshipLabels.getLabels(relationship, useIndianTerms)
+  ↓
+Update PersonNode with relationship badge
+```
 
 ---
 
-**Ready to begin?** Once you approve this plan, we'll start with Milestone 1: Scaffolding & Data Extraction.
+## 5. UI/UX Design Considerations
+
+### Tree View
+- **Layout:** Top-down hierarchical (dagre handles this)
+- **Node Style:** Card-based with image, name, dates
+- **Connections:** 
+  - Solid lines for parent-child
+  - Dashed lines for partners/spouses
+  - Different colors for different relationship types (optional)
+- **Zoom:** Fit to screen on load, allow zoom/pan
+- **Mobile:** Touch-friendly, larger nodes on mobile
+
+### Simple List View
+- **Layout:** Vertical list (current implementation)
+- **Grouping:** By family (main page) or flat list (family page)
+- **Items:** Name, relationship badge (if user selected), link to profile
+
+### Controls
+- **Location:** Top of tree viewer, sticky on scroll
+- **Mobile:** Collapsible menu or bottom sheet
+- **Icons:** Use lucide-react icons (already in project)
+
+---
+
+## 6. Relationship Calculation Logic
+
+### Key Algorithms
+
+#### 1. Path Finding
+```javascript
+// Find shortest path between two people
+function findPath(rootId, targetId, graph) {
+  // Use graphlib to find shortest path
+  // Handle both parent-child and partner relationships
+  // Return array: ['root', 'parent', 'sibling', 'target']
+}
+```
+
+#### 2. Relationship Determination
+```javascript
+// Determine relationship from path
+function calculateRelationship(path, rootPerson, targetPerson, treeData) {
+  // Check path length (generation distance)
+  // Check first step (paternal vs maternal)
+  // Check age (for Taiya vs Chacha)
+  // Check gender
+  // Return relationship object with both labels
+}
+```
+
+#### 3. Indian Relationship Rules
+- **Paternal Side (Dad's family):**
+  - Dad's older brother → Taiya ji
+  - Dad's younger brother → Chacha ji
+  - Dad's sister → Phua
+  - Dad's sister's husband → Fufad ji
+  
+- **Maternal Side (Mom's family):**
+  - Mom's brother → Mama ji
+  - Mom's sister → Masi
+  - Mom's sister's husband → Maser ji
+
+- **Siblings:**
+  - Older brother → Veer/Bhaji
+  - Older sister → Bhain/Didi
+  - Brother's wife → Bhabhi
+  - Sister's husband → Jija ji
+
+---
+
+## 7. Performance Considerations
+
+### Large Tree Optimization
+- **Virtualization:** Only render visible nodes (React Flow handles this)
+- **Image Lazy Loading:** Load images as nodes come into view
+- **Progressive Rendering:** Render core family first, then extended family
+- **Debouncing:** Debounce relationship calculations when user changes selection
+
+### Caching
+- Cache relationship calculations (memoization)
+- Cache graph structure (don't rebuild on every render)
+- Cache layout calculations
+
+---
+
+## 8. Testing Strategy
+
+### Unit Tests
+- Relationship calculation logic
+- Path finding algorithms
+- Graph building utilities
+
+### Integration Tests
+- Tree rendering with sample data
+- User selection and label updates
+- View toggle functionality
+
+### Manual Testing
+- Test with small family (Grewal)
+- Test with large family (all families)
+- Test on mobile devices
+- Test with missing data (no images, no dates)
+
+---
+
+## 9. Rollout Plan
+
+### Phase 1: Foundation (Milestones 1-2)
+- Basic tree visualization
+- Custom node components
+- Single family (Grewal) only
+
+### Phase 2: Relationships (Milestones 3-4)
+- Relationship calculation
+- User selection
+- Language toggle
+- View toggle
+
+### Phase 3: Integration (Milestones 5-6)
+- Main page integration
+- Family page integration
+- Multi-family support
+
+### Phase 4: Polish (Milestone 7)
+- Mobile optimization
+- Performance tuning
+- Accessibility
+- Error handling
+
+---
+
+## 10. Future Enhancements
+
+### Potential Additions
+- **Search:** Find person in tree
+- **Filters:** Show only specific relationship types
+- **Timeline View:** Show family tree over time
+- **Export:** Download tree as image/PDF
+- **Print View:** Optimized layout for printing
+- **Relationship Path Highlighting:** Highlight path between two selected people
+- **Photo Upload:** Allow users to upload/update photos directly in tree
+- **Privacy Controls:** Hide certain people or relationships
+
+---
+
+## 11. File Structure Summary
+
+### New Files to Create
+```
+src/
+├── components/
+│   ├── FamilyTree/
+│   │   ├── FamilyTreeViewer.jsx
+│   │   ├── PersonNode.jsx
+│   │   ├── TreeControls.jsx
+│   │   ├── SimpleListView.jsx
+│   │   └── TreeSkeleton.jsx
+│   └── RelationshipEngine/
+│       ├── relationshipCalculator.js
+│       ├── pathFinder.js
+│       └── relationshipLabels.js
+└── utils/
+    └── treeGraphBuilder.js
+```
+
+### Files to Modify
+```
+src/
+├── templates/
+│   ├── GlobalTree/
+│   │   └── LandingPage.jsx          # Add tree viewer
+│   └── FamilyPortal/
+│       └── FamilyHero.jsx            # Add tree viewer
+└── package.json                      # Add dependencies
+```
+
+---
+
+## 12. Dependencies Installation
+
+```bash
+npm install reactflow dagre graphlib
+```
+
+**Version Recommendations:**
+- `reactflow`: `^11.11.0` (latest stable)
+- `dagre`: `^0.8.5` (for automatic layout)
+- `graphlib`: `^2.1.9` (for path finding)
+
+---
+
+## 13. Success Criteria
+
+### Functional Requirements
+- ✅ Tree view displays all people from tree.json
+- ✅ Custom node cards with images and information
+- ✅ User can select "Who am I?" and see relationships
+- ✅ Toggle between Indian and English relationship terms
+- ✅ Toggle between tree view and simple list view
+- ✅ Works on main page (all families)
+- ✅ Works on family page (single family)
+- ✅ Mobile-friendly (touch gestures, responsive)
+
+### Performance Requirements
+- ✅ Tree loads in < 2 seconds for 100 people
+- ✅ Smooth zoom/pan on mobile
+- ✅ Relationship calculations update in < 500ms
+
+### UX Requirements
+- ✅ Intuitive controls
+- ✅ Clear visual hierarchy
+- ✅ Accessible (keyboard navigation, screen readers)
+- ✅ Graceful error handling
+
+---
+
+## 14. Recommendations
+
+### My Recommendation: **React Flow + Dagre + Custom Nodes**
+
+**Why:**
+1. **React Flow** gives us full control over node design while handling the complex graph logic
+2. **Dagre** automatically calculates tree layouts (saves weeks of manual positioning)
+3. **Custom nodes** allow us to build exactly the card design we want
+4. **Mobile support** is excellent out of the box
+5. **Active community** and good documentation
+
+### Implementation Approach: **Incremental & Testable**
+
+Start with Milestone 1 (basic tree) and test thoroughly before moving to relationships. This allows us to:
+- Validate the approach early
+- Get user feedback on tree layout
+- Adjust before building complex features
+- Ensure performance is acceptable
+
+### UI/UX Philosophy: **Progressive Enhancement**
+
+- **Default:** Simple list view (current implementation)
+- **Enhanced:** Tree view (new feature)
+- **Advanced:** Relationship labels (requires user selection)
+
+This ensures the site works for everyone, with additional features for those who want them.
+
+---
+
+## Next Steps
+
+1. **Review this plan** and confirm approach
+2. **Install dependencies** (`reactflow`, `dagre`, `graphlib`)
+3. **Start with Milestone 1** (basic tree visualization)
+4. **Test with Grewal family** first (small, manageable)
+5. **Iterate based on feedback** before expanding to all families
+
+---
+
+**Estimated Timeline:**
+- Milestones 1-2: 2-3 days (foundation)
+- Milestones 3-4: 3-4 days (relationships)
+- Milestones 5-6: 2-3 days (integration)
+- Milestone 7: 2-3 days (polish)
+- **Total: ~2 weeks** for full implementation

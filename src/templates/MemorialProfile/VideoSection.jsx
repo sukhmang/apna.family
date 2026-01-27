@@ -494,9 +494,11 @@ const StoriesContent = styled.div`
 `
 
 export default function VideoSection() {
-  const { eventData, memorialData } = usePerson()
+  const { eventData, memorialData, isMinimalProfile } = usePerson()
   
-  if (!eventData) {
+  // For minimal profiles (from tree.json), don't show video section
+  // They don't have eventData or videos
+  if (isMinimalProfile || !eventData) {
     return null
   }
 
