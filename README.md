@@ -688,22 +688,95 @@ withMinimumDelay(loadFamilyData(familyId), 1000)
 
 ## 📐 Development Standards
 
+### Error Handling & Error Boundaries
+
+**Error boundaries are mandatory** for all major components and features. They prevent the entire app from crashing when a component encounters an error.
+
+#### Implementation
+
+1. **Root Level** (`src/main.jsx`)
+   - Wraps entire app in `ErrorBoundary`
+   - Catches any unhandled errors at the top level
+
+2. **App Level** (`src/App.jsx`)
+   - Additional error boundary for routing/navigation errors
+   - Provides app-level error recovery
+
+3. **Feature-Specific Boundaries**
+   - `TreeErrorBoundary` for family tree components
+   - Wraps `FamilyTreeViewer` and tree-related components
+   - Provides tree-specific error messages and recovery
+
+4. **Component-Level Boundaries**
+   - Critical components like `PersonNode` have their own boundaries
+   - Prevents one broken node from crashing the entire tree
+   - Allows graceful degradation
+
+#### Error Boundary Components
+
+Located in `src/components/ErrorBoundary.jsx`:
+
+- **`ErrorBoundary`**: Generic error boundary with customizable fallback
+- **`TreeErrorBoundary`**: Specialized for tree visualization errors
+
+#### Usage Pattern
+
+```javascript
+// ✅ CORRECT: Wrap components in error boundaries
+import { ErrorBoundary, TreeErrorBoundary } from '../components/ErrorBoundary'
+
+function MyComponent() {
+  return (
+    <ErrorBoundary>
+      <ComplexComponent />
+    </ErrorBoundary>
+  )
+}
+
+// For tree components
+function TreeView() {
+  return (
+    <TreeErrorBoundary>
+      <FamilyTreeViewer />
+    </TreeErrorBoundary>
+  )
+}
+```
+
+#### Error Boundary Features
+
+- **Development Mode**: Shows detailed error messages and stack traces
+- **Production Mode**: Shows user-friendly error messages
+- **Recovery**: "Try Again" button to reset error state
+- **Logging**: Errors logged to console in development
+- **Future**: Ready for error reporting service integration (e.g., Sentry)
+
+#### Best Practices
+
+1. **Always wrap risky components**: Components that fetch data, render complex UI, or use third-party libraries
+2. **Provide fallback UI**: Custom `fallback` prop for specialized error messages
+3. **Don't catch everything**: Let expected errors (like 404s) bubble up normally
+4. **Test error scenarios**: Verify error boundaries work by intentionally breaking components
+
 ### Component Structure
 
 1. **Templates** (`src/templates/`)
    - Page-level components that compose smaller pieces
    - Use Context hooks for data (no prop drilling)
    - Handle loading states with skeletons
+   - Wrap in error boundaries for critical sections
 
 2. **Components** (`src/components/`)
    - Reusable UI elements
    - Context-aware when needed (e.g., `Navbar`)
    - Styled with Styled Components
+   - Use error boundaries for complex or data-dependent components
 
 3. **Contexts** (`src/contexts/`)
    - Provide data to components
    - Always include `loading` and `error` states
    - Use `withMinimumDelay` for data fetching
+   - Handle errors gracefully (don't crash on missing data)
 
 ### Data Loading Pattern
 

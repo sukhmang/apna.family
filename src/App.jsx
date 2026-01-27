@@ -5,6 +5,7 @@ import { GlobalStyles } from './styles/GlobalStyles'
 import { FamilyProvider } from './contexts/FamilyContext'
 import { PersonProvider } from './contexts/PersonContext'
 import { parseSubdomain, isRootDomain } from './utils/subdomain'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import OVERRIDES from './overrideRegistry'
 import NavigationLoader from './components/NavigationLoader'
 
@@ -108,13 +109,15 @@ function RootRoutes() {
  */
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <GlobalStyles />
-      <BrowserRouter>
-        <NavigationLoader />
-        <RootRoutes />
-      </BrowserRouter>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider theme={theme}>
+        <GlobalStyles />
+        <BrowserRouter>
+          <NavigationLoader />
+          <RootRoutes />
+        </BrowserRouter>
+      </ThemeProvider>
+    </ErrorBoundary>
   )
 }
 

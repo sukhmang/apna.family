@@ -15,7 +15,10 @@ import { loadTreeData } from '../../utils/treeLoader'
 import { buildGraphFromTree } from '../../utils/treeGraphBuilder'
 import { withMinimumDelay } from '../../utils/loadingDelay'
 import { calculateRelationship } from '../RelationshipEngine/relationshipCalculator'
+import { TreeErrorBoundary } from '../ErrorBoundary'
 import PersonNode from './PersonNode'
+import FamilyLegend from './FamilyLegend'
+import TreeSkeleton from './TreeSkeleton'
 
 // Register custom node types (must be outside component to avoid React Flow warning)
 const nodeTypes = {
@@ -29,6 +32,16 @@ const Container = styled.div`
   background-color: ${props => props.theme.colors.background};
   border-radius: ${props => props.theme.borderRadius.md};
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    height: 70vh;
+    min-height: 400px;
+  }
+
+  @media (max-width: 480px) {
+    height: 60vh;
+    min-height: 300px;
+  }
 `
 
 const LoadingContainer = styled.div`
@@ -65,13 +78,20 @@ const nodeHeight = 250
  * Calculate node positions using dagre layout algorithm
  * @param {Array} nodes - React Flow nodes
  * @param {Array} edges - React Flow edges
+ * @param {boolean} isMobile - Whether to use mobile-optimized spacing
  * @returns {Array} - Nodes with calculated positions
  */
-function getLayoutedElements(nodes, edges) {
+function getLayoutedElements(nodes, edges, isMobile = false) {
+  // Responsive spacing: more space on desktop, less on mobile
+  const horizontalSpacing = isMobile ? 80 : 150  // Increased from 50
+  const verticalSpacing = isMobile ? 150 : 200   // Increased from 100
+  
   dagreGraph.setGraph({ 
     rankdir: 'TB', // Top to bottom
-    nodesep: 50,   // Horizontal spacing between nodes
-    ranksep: 100   // Vertical spacing between ranks
+    nodesep: horizontalSpacing,   // Horizontal spacing between nodes
+    ranksep: verticalSpacing,      // Vertical spacing between ranks
+    edgesep: 50,                   // Minimum distance between edges
+    ranker: 'network-simplex'      // Better layout algorithm for trees
   })
 
   nodes.forEach((node) => {
@@ -207,10 +227,14 @@ const FamilyTreeViewer = forwardRef(function FamilyTreeViewer({
           }))
         }
 
+        // Detect mobile for responsive spacing
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+        
         // Calculate layout with dagre
         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
           graph.nodes,
-          graph.edges
+          graph.edges,
+          isMobile
         )
 
         // Ensure minimum delay for smooth animations
@@ -239,11 +263,7 @@ const FamilyTreeViewer = forwardRef(function FamilyTreeViewer({
   }, [])
 
   if (loading) {
-    return (
-      <LoadingContainer>
-        <LoadingText>Loading family tree...</LoadingText>
-      </LoadingContainer>
-    )
+    return <TreeSkeleton />
   }
 
   if (error) {
@@ -255,7 +275,9 @@ const FamilyTreeViewer = forwardRef(function FamilyTreeViewer({
   }
 
   return (
-    <Container>
+    <TreeErrorBoundary>
+      <Container>
+        <FamilyLegend familyId={familyId} />
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -269,18 +291,28 @@ const FamilyTreeViewer = forwardRef(function FamilyTreeViewer({
         nodesDraggable={false} // Disable dragging for cleaner tree view
         nodesConnectable={false} // Disable manual connections
         elementsSelectable={true}
+        panOnDrag={true}
+        zoomOnScroll={true}
+        zoomOnPinch={true}
+        preventScrolling={false}
+        minZoom={0.1}
+        maxZoom={2}
       >
-        <Background />
-        <Controls />
-        <MiniMap 
-          nodeColor={(node) => {
-            // Color nodes by family (if we have that data)
-            return node.data?.familyId ? '#94a3b8' : '#cbd5e1'
-          }}
-          maskColor="rgba(0, 0, 0, 0.1)"
-        />
-      </ReactFlow>
-    </Container>
+          <Background />
+          <Controls />
+          <MiniMap 
+            nodeColor={(node) => {
+              // Color nodes by family for visual distinction
+              if (node.data?.familyColor?.primary) {
+                return node.data.familyColor.primary
+              }
+              return node.data?.familyId ? '#94a3b8' : '#cbd5e1'
+            }}
+            maskColor="rgba(0, 0, 0, 0.1)"
+          />
+        </ReactFlow>
+      </Container>
+    </TreeErrorBoundary>
   )
 })
 

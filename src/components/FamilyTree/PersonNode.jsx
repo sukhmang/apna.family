@@ -1,15 +1,18 @@
 import { memo } from 'react'
 import { Handle, Position } from 'reactflow'
 import styled from 'styled-components'
-import { calculateRelationship } from '../RelationshipEngine/relationshipCalculator'
+import { ErrorBoundary } from '../ErrorBoundary'
 
 const NodeContainer = styled.div`
   width: 200px;
   min-height: 250px;
   background-color: ${props => props.theme.colors.cardBackground};
-  border: 2px solid ${props => props.$isSelected 
-    ? props.theme.colors.accent 
-    : props.theme.colors.border};
+  border: 2px solid ${props => {
+    if (props.$isSelected) {
+      return props.$familyColor?.primary || props.theme.colors.accent
+    }
+    return props.$familyColor?.border || props.theme.colors.border
+  }};
   border-radius: ${props => props.theme.borderRadius.md};
   box-shadow: ${props => props.theme.shadows.md};
   overflow: hidden;
@@ -20,7 +23,17 @@ const NodeContainer = styled.div`
   &:hover {
     transform: translateY(-4px);
     box-shadow: ${props => props.theme.shadows.lg};
-    border-color: ${props => props.theme.colors.accent};
+    border-color: ${props => props.$familyColor?.primary || props.theme.colors.accent};
+  }
+
+  @media (max-width: 768px) {
+    width: 160px;
+    min-height: 200px;
+  }
+
+  @media (max-width: 480px) {
+    width: 140px;
+    min-height: 180px;
   }
 `
 
@@ -125,8 +138,9 @@ function PersonNode({ data, selected }) {
     familyId,
     personId,
     treeId,
-    relationshipLabel
-  } = data
+    relationshipLabel,
+    familyColor
+  } = data || {}
 
   // Format dates for display
   const formatDate = (dateString) => {
@@ -205,11 +219,25 @@ function PersonNode({ data, selected }) {
     return '?'
   }
 
+  // Provide default familyColor if missing
+  const safeFamilyColor = familyColor || null
+
   return (
-    <NodeContainer 
-      $isSelected={selected}
-      onClick={handleClick}
-    >
+    <ErrorBoundary>
+      <NodeContainer 
+        $isSelected={selected}
+        $familyColor={safeFamilyColor}
+        onClick={handleClick}
+        role="button"
+        tabIndex={0}
+        aria-label={`View ${name}'s profile`}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            handleClick()
+          }
+        }}
+      >
       {/* Top handle for incoming edges (from parents) */}
       <Handle
         type="target"
@@ -277,6 +305,7 @@ function PersonNode({ data, selected }) {
         }}
       />
     </NodeContainer>
+    </ErrorBoundary>
   )
 }
 

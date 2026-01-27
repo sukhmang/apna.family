@@ -7,6 +7,7 @@
 
 import { parseTreeId } from './treeUtils'
 import { loadPersonData } from './dataLoader'
+import { getFamilyColorSync } from './familyColors'
 
 /**
  * Build React Flow graph from tree.json data
@@ -50,6 +51,9 @@ export async function buildGraphFromTree(people, loadImages = false) {
       }
     }
     
+    // Get family color for visual distinction
+    const familyColor = getFamilyColorSync(familyId)
+
     // Node data structure for React Flow
     const nodeData = {
       id: person.id, // Use tree ID as node ID (e.g., "baljit_grewal")
@@ -68,6 +72,8 @@ export async function buildGraphFromTree(people, loadImages = false) {
         isDeceased: person.isDeceased === true,
         portraitImage: portraitImage,
         hasFullProfile: person.hasFullProfile === true,
+        // Family color for visual distinction
+        familyColor: familyColor,
         // Store full person data for relationship calculations
         personData: person
       }
