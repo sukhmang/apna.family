@@ -12,26 +12,26 @@ const ErrorContainer = styled.div`
 `
 
 const ErrorTitle = styled.h2`
-  font-size: ${props => props.theme.typography.sizes['2xl']};
-  font-weight: ${props => props.theme.typography.weights.bold};
-  color: ${props => props.theme.colors.error || '#ef4444'};
+  font-size: ${props => props.theme?.typography?.sizes?.['2xl'] || '1.5rem'};
+  font-weight: ${props => props.theme?.typography?.weights?.bold || 'bold'};
+  color: ${props => props.theme?.colors?.error || '#ef4444'};
   margin-bottom: 1rem;
 `
 
 const ErrorMessage = styled.p`
-  font-size: ${props => props.theme.typography.sizes.base};
-  color: ${props => props.theme.colors.text.secondary};
+  font-size: ${props => props.theme?.typography?.sizes?.base || '1rem'};
+  color: ${props => props.theme?.colors?.text?.secondary || '#6b7280'};
   margin-bottom: 1.5rem;
   max-width: 600px;
 `
 
 const ErrorDetails = styled.pre`
-  font-size: ${props => props.theme.typography.sizes.sm};
-  color: ${props => props.theme.colors.text.tertiary};
-  background-color: ${props => props.theme.colors.background};
+  font-size: ${props => props.theme?.typography?.sizes?.sm || '0.875rem'};
+  color: ${props => props.theme?.colors?.text?.tertiary || '#9ca3af'};
+  background-color: ${props => props.theme?.colors?.background || '#ffffff'};
   padding: 1rem;
-  border-radius: ${props => props.theme.borderRadius.md};
-  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: ${props => props.theme?.borderRadius?.md || '0.375rem'};
+  border: 1px solid ${props => props.theme?.colors?.border || '#e5e7eb'};
   overflow-x: auto;
   max-width: 100%;
   text-align: left;
@@ -40,17 +40,17 @@ const ErrorDetails = styled.pre`
 
 const RetryButton = styled.button`
   padding: 0.75rem 1.5rem;
-  font-size: ${props => props.theme.typography.sizes.base};
-  font-weight: ${props => props.theme.typography.weights.semibold};
-  color: ${props => props.theme.colors.cardBackground};
-  background-color: ${props => props.theme.colors.accent};
+  font-size: ${props => props.theme?.typography?.sizes?.base || '1rem'};
+  font-weight: ${props => props.theme?.typography?.weights?.semibold || '600'};
+  color: ${props => props.theme?.colors?.cardBackground || '#ffffff'};
+  background-color: ${props => props.theme?.colors?.accent || '#2563eb'};
   border: none;
-  border-radius: ${props => props.theme.borderRadius.md};
+  border-radius: ${props => props.theme?.borderRadius?.md || '0.375rem'};
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: ${props => props.theme.colors.accentHover};
+    background-color: ${props => props.theme?.colors?.accentHover || '#1d4ed8'};
     transform: translateY(-2px);
   }
 `

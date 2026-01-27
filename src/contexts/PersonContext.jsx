@@ -32,8 +32,8 @@ export function PersonProvider({ children, personId }) {
         try {
           fullProfileData = await loadPersonData(familyId, personId)
         } catch (fileError) {
-          // File doesn't exist - will fall back to tree.json minimal profile
-          console.log(`No full profile file found for ${familyId}-${personId}, using tree.json data`)
+          // Full profile doesn't exist - will fall back to minimal profile from database
+          console.log(`No full profile found for ${familyId}-${personId}, using minimal profile from database`)
         }
 
         // If full profile exists, use it
@@ -44,11 +44,11 @@ export function PersonProvider({ children, personId }) {
           return
         }
 
-        // Otherwise, load minimal profile from tree.json
+        // Otherwise, load minimal profile from database
         const treePerson = await getPersonFromTreeByIds(familyId, personId)
         
         if (!treePerson) {
-          throw new Error(`Person not found in tree.json: ${familyId}-${personId}`)
+          throw new Error(`Person not found in database: ${familyId}-${personId}`)
         }
 
         // Convert tree.json entry to minimal profile format

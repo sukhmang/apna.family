@@ -47,11 +47,23 @@ const BreadcrumbSection = styled.div`
   border-bottom: 1px solid ${props => props.theme.colors.border};
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.1875rem;
   flex-wrap: wrap;
   
   @media (min-width: 640px) {
     padding: 0.375rem 0;
+    gap: 0.25rem;
+  }
+`
+
+const BreadcrumbLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.1875rem;
+  flex-wrap: wrap;
+  
+  @media (min-width: 640px) {
     gap: 0.25rem;
   }
 `
@@ -617,29 +629,41 @@ export default function Navbar() {
       <NavContainer>
         {showBreadcrumbs && (
           <BreadcrumbSection>
-            {breadcrumbs.map((crumb, index) => {
-              const Icon = crumb.icon
-              const isLast = index === breadcrumbs.length - 1
-              
-              return (
-                <span key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  {crumb.isSkeleton ? (
-                    <BreadcrumbSkeleton $width={crumb.skeletonWidth} />
-                  ) : crumb.href ? (
-                    <BreadcrumbLink href={crumb.href}>
-                      {Icon && <Icon />}
-                      {crumb.label}
-                    </BreadcrumbLink>
-                  ) : (
-                    <BreadcrumbText>
-                      {Icon && <Icon />}
-                      {crumb.label}
-                    </BreadcrumbText>
-                  )}
-                  {!isLast && <BreadcrumbSeparator />}
-                </span>
-              )
-            })}
+            <BreadcrumbLeft>
+              {breadcrumbs.map((crumb, index) => {
+                const Icon = crumb.icon
+                const isLast = index === breadcrumbs.length - 1
+                
+                return (
+                  <span key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {crumb.isSkeleton ? (
+                      <BreadcrumbSkeleton $width={crumb.skeletonWidth} />
+                    ) : crumb.href ? (
+                      <BreadcrumbLink href={crumb.href}>
+                        {Icon && <Icon />}
+                        {crumb.label}
+                      </BreadcrumbLink>
+                    ) : (
+                      <BreadcrumbText>
+                        {Icon && <Icon />}
+                        {crumb.label}
+                      </BreadcrumbText>
+                    )}
+                    {!isLast && <BreadcrumbSeparator />}
+                  </span>
+                )
+              })}
+            </BreadcrumbLeft>
+          </BreadcrumbSection>
+        )}
+        {!showBreadcrumbs && (
+          <BreadcrumbSection>
+            <BreadcrumbLeft>
+              <BreadcrumbLink href="/">
+                <Home />
+                Home
+              </BreadcrumbLink>
+            </BreadcrumbLeft>
           </BreadcrumbSection>
         )}
         {showSectionNav && (

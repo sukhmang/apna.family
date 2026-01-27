@@ -6,6 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "migrate-to-supabase": "node migrations/002-data-migration.js",
     "update-gallery": "node scripts/update-gallery.js",
     "update-gallery-csv": "node scripts/update-gallery-csv.js --family=grewal",
     "generate-thumbnails": "node scripts/generate-thumbnails.js --family=grewal",
@@ -14,6 +15,7 @@
     "upload-to-cdn": "node scripts/upload-to-cdn.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.93.1",
     "cloudinary": "^2.9.0",
     "dagre": "^0.8.5",
     "dotenv": "^17.2.3",

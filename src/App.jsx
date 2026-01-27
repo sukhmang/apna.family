@@ -4,10 +4,12 @@ import { theme } from './styles/theme'
 import { GlobalStyles } from './styles/GlobalStyles'
 import { FamilyProvider } from './contexts/FamilyContext'
 import { PersonProvider } from './contexts/PersonContext'
+import { AuthProvider } from './contexts/AuthContext'
 import { parseSubdomain, isRootDomain } from './utils/subdomain'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import OVERRIDES from './overrideRegistry'
 import NavigationLoader from './components/NavigationLoader'
+import { AuthCallback } from './components/AuthCallback'
 
 // Templates
 import GlobalTreeLanding from './templates/GlobalTree/LandingPage'
@@ -84,6 +86,7 @@ function RootRoutes() {
   if (isRoot) {
     return (
       <Routes>
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/" element={<GlobalTreeLanding />} />
       </Routes>
     )
@@ -92,6 +95,7 @@ function RootRoutes() {
   // Family subdomain: Route based on path
   return (
     <Routes>
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/homevideos" element={
         <FamilyProvider>
           <VideoVault />
@@ -109,15 +113,17 @@ function RootRoutes() {
  */
 function App() {
   return (
-    <ErrorBoundary>
-      <ThemeProvider theme={theme}>
-        <GlobalStyles />
-        <BrowserRouter>
-          <NavigationLoader />
-          <RootRoutes />
-        </BrowserRouter>
-      </ThemeProvider>
-    </ErrorBoundary>
+    <ThemeProvider theme={theme}>
+      <GlobalStyles />
+      <ErrorBoundary>
+        <AuthProvider>
+          <BrowserRouter>
+            <NavigationLoader />
+            <RootRoutes />
+          </BrowserRouter>
+        </AuthProvider>
+      </ErrorBoundary>
+    </ThemeProvider>
   )
 }
 

@@ -6,6 +6,7 @@ import { getAllFamilyIdsFromTree } from '../../utils/treeLoader'
 import FamilyTreeViewer from '../../components/FamilyTree/FamilyTreeViewer'
 import TreeControls from '../../components/FamilyTree/TreeControls'
 import SimpleListView from '../../components/FamilyTree/SimpleListView'
+import { AuthButton } from '../../components/AuthButton'
 
 const Container = styled.div`
   max-width: 100%;
@@ -56,6 +57,28 @@ const FamilyLink = styled.a`
 const LoadingText = styled.p`
   font-size: ${props => props.theme.typography.sizes.base};
   color: ${props => props.theme.colors.text.secondary};
+`
+
+const AuthSection = styled.div`
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: ${props => props.theme.colors.cardBackground};
+  border-radius: ${props => props.theme.borderRadius.md};
+  box-shadow: ${props => props.theme.shadows.sm};
+  border: 1px solid ${props => props.theme.colors.border};
+`
+
+const AuthSectionTitle = styled.h2`
+  font-size: ${props => props.theme.typography.sizes.xl};
+  font-weight: ${props => props.theme.typography.weights.semibold};
+  color: ${props => props.theme.colors.text.primary};
+  margin-bottom: 0.75rem;
+`
+
+const AuthSectionDescription = styled.p`
+  font-size: ${props => props.theme.typography.sizes.sm};
+  color: ${props => props.theme.colors.text.secondary};
+  margin-bottom: 1rem;
 `
 
 const TreeContainer = styled.div`
@@ -207,6 +230,14 @@ export default function LandingPage() {
     <Container>
       <Title>Apna Family Network</Title>
       <Subtitle>Connecting families through shared memories and stories</Subtitle>
+      
+      <AuthSection>
+        <AuthSectionTitle>Admin Access</AuthSectionTitle>
+        <AuthSectionDescription>
+          Sign in to manage family data, add members, and upload photos. Login is only available from this main page.
+        </AuthSectionDescription>
+        <AuthButton />
+      </AuthSection>
       
       <TreeControls
         selectedPersonId={selectedPersonId}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { loadTreeData } from '../../utils/treeLoader'
+import { getFamilyId } from '../../utils/subdomain'
 
 const ControlsContainer = styled.div`
   display: flex;
@@ -128,13 +129,16 @@ export default function TreeControls({
   onZoomFit,
   onZoomReset
 }) {
+  // Get familyId from subdomain (works on both root and family subdomains)
+  const familyId = getFamilyId()
   const [people, setPeople] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loadPeople = async () => {
       try {
-        const treeData = await loadTreeData()
+        // Use familyId for cluster optimization
+        const treeData = await loadTreeData(familyId)
         const allPeople = treeData.people || []
         
         // Sort people by name for easier selection
@@ -157,7 +161,7 @@ export default function TreeControls({
     }
 
     loadPeople()
-  }, [])
+  }, [familyId])
 
   const handlePersonChange = (e) => {
     const value = e.target.value

@@ -379,8 +379,8 @@ const FamilyTreeViewer = forwardRef(function FamilyTreeViewer({
         setLoading(true)
         setError(null)
 
-        // Load tree data
-        const treeData = await loadTreeData()
+        // Load tree data (use familyId for cluster optimization)
+        const treeData = await loadTreeData(familyId)
         const people = treeData.people || []
 
         if (people.length === 0) {
