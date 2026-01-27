@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import { getFamilyId } from '../utils/subdomain'
 import { loadFamilyData } from '../utils/dataLoader'
 
-const FamilyContext = createContext(null)
+export const FamilyContext = createContext(null)
 
 /**
  * FamilyContext Provider

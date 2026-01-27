@@ -1,3 +1,5 @@
+import Layout from '../../components/Layout'
+import Navbar from '../../components/Navbar'
 import { useFamily } from '../../contexts/FamilyContext'
 import FamilyHero from './FamilyHero'
 
@@ -9,8 +11,22 @@ export default function FamilyPage() {
   const { familyData, loading } = useFamily()
 
   if (loading) {
-    return <div>Loading...</div>
+    return (
+      <>
+        <Navbar />
+        <Layout>
+          <div>Loading...</div>
+        </Layout>
+      </>
+    )
   }
 
-  return <FamilyHero familyData={familyData} />
+  return (
+    <>
+      <Navbar />
+      <Layout>
+        <FamilyHero familyData={familyData} />
+      </Layout>
+    </>
+  )
 }

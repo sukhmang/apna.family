@@ -1,3 +1,5 @@
+import Layout from '../../components/Layout'
+import Navbar from '../../components/Navbar'
 import { useFamily } from '../../contexts/FamilyContext'
 import { useState, useEffect } from 'react'
 import { loadPersonData } from '../../utils/dataLoader'
@@ -36,8 +38,22 @@ export default function VideoVaultPage() {
   }, [familyId])
 
   if (loading) {
-    return <div>Loading...</div>
+    return (
+      <>
+        <Navbar />
+        <Layout>
+          <div>Loading...</div>
+        </Layout>
+      </>
+    )
   }
 
-  return <VideoGrid homeVideos={homeVideos || []} />
+  return (
+    <>
+      <Navbar />
+      <Layout>
+        <VideoGrid homeVideos={homeVideos || []} />
+      </Layout>
+    </>
+  )
 }

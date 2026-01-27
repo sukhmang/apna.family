@@ -1,9 +1,7 @@
 import Layout from '../../components/Layout'
 import Navbar from '../../components/Navbar'
-import Hero from './Hero'
+import Profile from './Profile'
 import VideoSection from './VideoSection'
-import Events from './Events'
-import Stories from './Stories'
 import Gallery from './Gallery'
 
 /**
@@ -14,14 +12,13 @@ export default function ProfilePage() {
   return (
     <>
       <Navbar />
-      <Layout>
-        <Hero />
-        <VideoSection />
-        {/* Events section - can be shown/hidden based on data */}
-        {/* <Events /> */}
-        <Stories />
-        <Gallery />
-      </Layout>
+      <div style={{ minHeight: '100vh' }}>
+        <Layout>
+          <Profile />
+          <VideoSection />
+          <Gallery />
+        </Layout>
+      </div>
     </>
   )
 }
