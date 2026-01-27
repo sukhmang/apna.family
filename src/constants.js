@@ -5,7 +5,7 @@ export const MEMORIAL_DATA = {
   deathDate: "January 16, 2026",
   birthYear: 1953,
   deathYear: 2026,
-  welcomeMessage: "We invite you to join us in celebrating the life and legacy of Baljit Singh Grewal. This memorial site serves as a place to remember, honor, and share memories of a life well-lived.",
+  welcomeMessage: "We invite you to join us in celebrating the life and legacy of Baljit (Bill) Singh Grewal. This memorial site serves as a place to remember, honor, and share memories of a life well-lived.",
   portraitImage: "/portrait.png", // Portrait image in public folder
 }
 

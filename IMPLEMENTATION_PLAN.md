@@ -83,13 +83,17 @@
    - Extract family ID from hostname
    - Extract person ID from URL path
 
-3. **Create context/provider (optional but recommended):**
+3. **Create context/provider (MANDATORY):**
    - `src/contexts/FamilyContext.jsx` - Provides current family data to all components
+     - Exports `useFamily()` hook for components to access family data (theme colors, family ID, etc.)
+     - Prevents prop drilling through multiple component layers
    - `src/contexts/PersonContext.jsx` - Provides current person data to memorial pages
+     - Exports `usePerson()` hook for components to access person data (memorial info, events, etc.)
+   - Wrap appropriate routes with context providers in `App.jsx`
 
 ### Files to Create:
-- `src/contexts/FamilyContext.jsx` (optional)
-- `src/contexts/PersonContext.jsx` (optional)
+- `src/contexts/FamilyContext.jsx` (MANDATORY)
+- `src/contexts/PersonContext.jsx` (MANDATORY)
 
 ### Files to Modify:
 - `src/App.jsx` - Complete rewrite of routing logic
@@ -97,9 +101,10 @@
 
 ### Validation:
 - ✅ Root domain shows GlobalTree placeholder
-- ✅ `grewal.localhost:5173` shows FamilyPortal placeholder
-- ✅ `grewal.localhost:5173/baljit` shows MemorialProfile placeholder
-- ✅ `grewal.localhost:5173/homevideos` shows VideoVault placeholder
+- ✅ `grewal.localhost:5173` shows FamilyPortal placeholder (with FamilyContext provider)
+- ✅ `grewal.localhost:5173/baljit` shows MemorialProfile placeholder (with both FamilyContext and PersonContext providers)
+- ✅ `grewal.localhost:5173/homevideos` shows VideoVault placeholder (with FamilyContext provider)
+- ✅ Context providers are correctly wrapped around routes in `App.jsx`
 
 ---
 
@@ -117,22 +122,24 @@
    - Move `src/components/StoriesCard.jsx` → `src/templates/MemorialProfile/Stories.jsx`
      - Accept `personData` prop (for email subject customization)
    - Move `src/components/Gallery.jsx` → `src/templates/MemorialProfile/Gallery.jsx`
-     - Accept `familyId` prop to load family-specific `images.json`
+     - Use `useFamily()` hook to get `familyId` and load family-specific `images.json`
    - Move `src/components/Lightbox.jsx` → `src/templates/MemorialProfile/Lightbox.jsx` (or keep in components if shared)
    - Create `src/templates/MemorialProfile/ProfilePage.jsx`:
      - Composes all above components
      - Loads person data via `dataLoader`
-     - Passes data as props to child components
+     - Wraps components with `PersonContext.Provider` to make data available via `usePerson()` hook
+     - Child components use `usePerson()` instead of props
 
 2. **Refactor VideoVault template:**
    - Move `src/components/HomeVideos.jsx` → `src/templates/VideoVault/VideoGrid.jsx`
-     - Accept `familyId` prop to load family-specific home videos
+     - Use `useFamily()` hook to get `familyId` and load family-specific home videos
      - Remove direct import of `HOME_VIDEOS` from constants
 
 3. **Refactor shared components:**
    - `src/components/StickyNav.jsx` → `src/components/Navbar.jsx`
      - Make it context-aware (different links for root vs family vs person pages)
-     - Accept `familyId` and `personId` props
+     - Use `useFamily()` and `usePerson()` hooks instead of props
+     - Access family theme colors via context for styling
    - `src/components/Layout.jsx` - Keep as shared component (no changes needed)
 
 4. **Update all component imports:**
@@ -167,10 +174,11 @@
 - `src/components/HomeVideos.jsx`
 
 ### Validation:
-- ✅ All components accept data via props (no hardcoded constants)
-- ✅ MemorialProfile template loads and displays Baljit's data correctly
-- ✅ VideoVault template loads and displays home videos correctly
-- ✅ Navigation works correctly on all page types
+- ✅ All components use context hooks instead of hardcoded constants
+- ✅ Components use `useFamily()` and `usePerson()` hooks instead of prop drilling
+- ✅ MemorialProfile template loads and displays Baljit's data correctly via context
+- ✅ VideoVault template loads and displays home videos correctly via context
+- ✅ Navigation works correctly on all page types and adapts based on context
 
 ---
 
@@ -206,6 +214,7 @@
 
 3. **Update Gallery component:**
    - Modify `src/templates/MemorialProfile/Gallery.jsx`:
+     - Use `useFamily()` hook to get `familyId`
      - Load `images.json` from `public/images/{familyId}/images.json`
      - Handle family-specific paths for thumbnails
 
@@ -352,24 +361,26 @@ After completing all milestones:
 
 ## Notes & Considerations
 
-1. **Backward Compatibility:** Keep `src/constants.js` during migration for safety, remove after validation.
+1. **Context Providers (MANDATORY):** `FamilyContext` and `PersonContext` are required, not optional. They prevent prop drilling through multiple component layers (App → FamilyPortal → Layout → Navbar → etc.). Components like Navbar and Gallery can simply call `useFamily()` or `usePerson()` to access data without passing props through every layer. This makes the codebase much cleaner and more maintainable.
 
-2. **Subdomain Testing:** The user mentioned their local environment supports subdomains natively. Use `window.location.hostname` directly without query parameter workarounds.
+2. **Backward Compatibility:** Keep `src/constants.js` during migration for safety, remove after validation.
 
-3. **Data Structure:** JSON files should match the existing `constants.js` structure exactly to minimize component changes.
+3. **Subdomain Testing:** The user mentioned their local environment supports subdomains natively. Use `window.location.hostname` directly without query parameter workarounds.
 
-4. **Media Migration:** Moving `public/images/` to `public/images/grewal/` is a breaking change. Ensure all references are updated.
+4. **Data Structure:** JSON files should match the existing `constants.js` structure exactly to minimize component changes.
 
-5. **Script Compatibility:** Gallery scripts should default to `grewal` family if no parameter provided, ensuring existing workflows continue to work.
+5. **Media Migration:** Moving `public/images/` to `public/images/grewal/` is a breaking change. Ensure all references are updated.
 
-6. **Future Enhancements:** The GlobalTree can be enhanced with an interactive D3.js visualization later. For now, a simple list is sufficient.
+6. **Script Compatibility:** Gallery scripts should default to `grewal` family if no parameter provided, ensuring existing workflows continue to work.
+
+7. **Future Enhancements:** The GlobalTree can be enhanced with an interactive D3.js visualization later. For now, a simple list is sufficient.
 
 ---
 
 ## Estimated Timeline
 
 - **Milestone 1:** 2-3 hours (scaffolding, data extraction)
-- **Milestone 2:** 1-2 hours (routing logic)
+- **Milestone 2:** 2-3 hours (routing logic + context providers)
 - **Milestone 3:** 4-6 hours (component refactoring)
 - **Milestone 4:** 2-3 hours (media reorganization, script updates)
 - **Milestone 5:** 2-3 hours (new templates)
