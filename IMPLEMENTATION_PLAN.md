@@ -64,26 +64,36 @@
 ---
 
 ## Milestone 2: Subdomain Routing Logic
-**Goal:** Implement the traffic controller in `App.jsx` that routes based on hostname.
+**Goal:** Implement the traffic controller in `App.jsx` that routes based on hostname, with support for custom page overrides.
 
 ### Tasks:
-1. **Update `App.jsx` routing logic:**
+1. **Create override registry system:**
+   - Create `src/custom/` folder structure for custom page overrides
+   - Create `src/overrideRegistry.js` - Maps custom components for families and people
+   - Structure: `src/custom/{familyId}/{ComponentName}.jsx`
+   - Registry pattern: Check registry first, fall back to template if no override exists
+
+2. **Update `App.jsx` routing logic:**
    - Detect root domain (`localhost:5173` or `apna.family`) → Show GlobalTree
    - Detect family subdomain (`grewal.localhost:5173` or `grewal.apna.family`) → Show FamilyPortal or MemorialProfile/VideoVault based on path
    - Parse hostname using `utils/subdomain.js`
+   - **Override check pattern:**
+     - For family pages: Check `OVERRIDES.families[familyId]` first
+     - For person pages: Check `OVERRIDES.people[familyId]?.[personId]` first
+     - Fall back to standard template if no override exists
    - Route structure:
      - `/` on root → `<GlobalTree />`
-     - `/` on family subdomain → `<FamilyPortal />`
-     - `/{personId}` on family subdomain → `<MemorialProfile personId={personId} />`
-     - `/homevideos` on family subdomain → `<VideoVault />`
+     - `/` on family subdomain → Check override → `<FamilyPortal />` or custom component
+     - `/{personId}` on family subdomain → Check override → `<MemorialProfile personId={personId} />` or custom component
+     - `/homevideos` on family subdomain → `<VideoVault />` (can add override support later if needed)
 
-2. **Implement subdomain detection:**
+3. **Implement subdomain detection:**
    - Handle `localhost` subdomains (e.g., `grewal.localhost:5173`)
    - Handle production subdomains (e.g., `grewal.apna.family`)
    - Extract family ID from hostname
    - Extract person ID from URL path
 
-3. **Create context/provider (MANDATORY):**
+4. **Create context/provider (MANDATORY):**
    - `src/contexts/FamilyContext.jsx` - Provides current family data to all components
      - Exports `useFamily()` hook for components to access family data (theme colors, family ID, etc.)
      - Prevents prop drilling through multiple component layers
@@ -92,11 +102,13 @@
    - Wrap appropriate routes with context providers in `App.jsx`
 
 ### Files to Create:
+- `src/custom/` - Folder structure for custom overrides (empty initially)
+- `src/overrideRegistry.js` - Registry mapping custom components
 - `src/contexts/FamilyContext.jsx` (MANDATORY)
 - `src/contexts/PersonContext.jsx` (MANDATORY)
 
 ### Files to Modify:
-- `src/App.jsx` - Complete rewrite of routing logic
+- `src/App.jsx` - Complete rewrite of routing logic with override checks
 - `src/utils/subdomain.js` - Implement hostname parsing
 
 ### Validation:
@@ -105,6 +117,7 @@
 - ✅ `grewal.localhost:5173/baljit` shows MemorialProfile placeholder (with both FamilyContext and PersonContext providers)
 - ✅ `grewal.localhost:5173/homevideos` shows VideoVault placeholder (with FamilyContext provider)
 - ✅ Context providers are correctly wrapped around routes in `App.jsx`
+- ✅ Override registry exists and can be extended for custom pages
 
 ---
 
@@ -361,19 +374,26 @@ After completing all milestones:
 
 ## Notes & Considerations
 
-1. **Context Providers (MANDATORY):** `FamilyContext` and `PersonContext` are required, not optional. They prevent prop drilling through multiple component layers (App → FamilyPortal → Layout → Navbar → etc.). Components like Navbar and Gallery can simply call `useFamily()` or `usePerson()` to access data without passing props through every layer. This makes the codebase much cleaner and more maintainable.
+1. **Custom Page Overrides:** The architecture supports custom pages that deviate from templates using the Override Registry pattern:
+   - **Standard pages** use templates in `src/templates/`
+   - **Custom pages** go in `src/custom/{familyId}/` and are registered in `src/overrideRegistry.js`
+   - **Router logic** checks registry first, falls back to template if no override exists
+   - **Examples:** `grewal.apna.family/vanita` can be fully custom, while `grewal.apna.family/baljit` uses the template. `wong.apna.family` can be custom, while `wong.apna.family/steve` uses the template.
+   - This keeps templates clean and allows one-off customizations without affecting the core architecture.
 
-2. **Backward Compatibility:** Keep `src/constants.js` during migration for safety, remove after validation.
+2. **Context Providers (MANDATORY):** `FamilyContext` and `PersonContext` are required, not optional. They prevent prop drilling through multiple component layers (App → FamilyPortal → Layout → Navbar → etc.). Components like Navbar and Gallery can simply call `useFamily()` or `usePerson()` to access data without passing props through every layer. This makes the codebase much cleaner and more maintainable.
 
-3. **Subdomain Testing:** The user mentioned their local environment supports subdomains natively. Use `window.location.hostname` directly without query parameter workarounds.
+3. **Backward Compatibility:** Keep `src/constants.js` during migration for safety, remove after validation.
 
-4. **Data Structure:** JSON files should match the existing `constants.js` structure exactly to minimize component changes.
+4. **Subdomain Testing:** The user mentioned their local environment supports subdomains natively. Use `window.location.hostname` directly without query parameter workarounds.
 
-5. **Media Migration:** Moving `public/images/` to `public/images/grewal/` is a breaking change. Ensure all references are updated.
+5. **Data Structure:** JSON files should match the existing `constants.js` structure exactly to minimize component changes.
 
-6. **Script Compatibility:** Gallery scripts should default to `grewal` family if no parameter provided, ensuring existing workflows continue to work.
+6. **Media Migration:** Moving `public/images/` to `public/images/grewal/` is a breaking change. Ensure all references are updated.
 
-7. **Future Enhancements:** The GlobalTree can be enhanced with an interactive D3.js visualization later. For now, a simple list is sufficient.
+7. **Script Compatibility:** Gallery scripts should default to `grewal` family if no parameter provided, ensuring existing workflows continue to work.
+
+8. **Future Enhancements:** The GlobalTree can be enhanced with an interactive D3.js visualization later. For now, a simple list is sufficient.
 
 ---
 

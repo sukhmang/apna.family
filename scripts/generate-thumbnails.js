@@ -3,13 +3,14 @@
 /**
  * Thumbnail Generation Script
  * 
- * Generates thumbnails for all images in public/images/ folder
- * and saves them to public/images/thumbnails/
+ * Generates thumbnails for all images in public/images/{family}/ folder
+ * and saves them to public/images/{family}/thumbnails/
  * 
  * Requirements: npm install sharp
  * 
- * Usage: npm run generate-thumbnails
- *    or: node scripts/generate-thumbnails.js
+ * Usage: npm run generate-thumbnails --family=grewal
+ *    or: node scripts/generate-thumbnails.js --family=grewal
+ *    or: node scripts/generate-thumbnails.js (defaults to 'grewal')
  */
 
 import fs from 'fs';
@@ -19,7 +20,12 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const IMAGES_DIR = path.join(__dirname, '..', 'public', 'images');
+// Parse command line arguments for --family parameter
+const args = process.argv.slice(2);
+const familyArg = args.find(arg => arg.startsWith('--family='));
+const familyId = familyArg ? familyArg.split('=')[1] : 'grewal'; // Default to 'grewal'
+
+const IMAGES_DIR = path.join(__dirname, '..', 'public', 'images', familyId);
 const THUMBNAILS_DIR = path.join(IMAGES_DIR, 'thumbnails');
 
 // Supported image extensions (videos don't need thumbnails - they play directly)
@@ -40,7 +46,8 @@ async function generateThumbnails() {
     // Create thumbnails directory if it doesn't exist
     if (!fs.existsSync(THUMBNAILS_DIR)) {
       fs.mkdirSync(THUMBNAILS_DIR, { recursive: true });
-      console.log(`📁 Created thumbnails directory: ${THUMBNAILS_DIR}`);
+      console.log(`📁 Processing family: ${familyId}`);
+    console.log(`📁 Created thumbnails directory: ${THUMBNAILS_DIR}`);
     }
 
     // Try to import sharp

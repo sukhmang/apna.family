@@ -3,13 +3,14 @@
 /**
  * Gallery CSV Updater Script
  * 
- * Syncs gallery.csv with actual files in public/images/
+ * Syncs gallery.csv with actual files in public/images/{family}/
  * - Removes entries for files that no longer exist
  * - Adds entries for new files (images, MP4s, GIFs)
  * - Sets default_sort to 10000 for new entries or entries without sort value
  * 
- * Usage: npm run update-gallery-csv
- *    or: node scripts/update-gallery-csv.js
+ * Usage: npm run update-gallery-csv --family=grewal
+ *    or: node scripts/update-gallery-csv.js --family=grewal
+ *    or: node scripts/update-gallery-csv.js (defaults to 'grewal')
  */
 
 import fs from 'fs';
@@ -21,8 +22,13 @@ import { fetchCloudinaryImages } from './fetch-cloudinary-images.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const IMAGES_DIR = path.join(__dirname, '..', 'public', 'images');
-const GALLERY_CSV = path.join(__dirname, '..', 'public', 'gallery.csv');
+// Parse command line arguments for --family parameter
+const args = process.argv.slice(2);
+const familyArg = args.find(arg => arg.startsWith('--family='));
+const familyId = familyArg ? familyArg.split('=')[1] : 'grewal'; // Default to 'grewal'
+
+const IMAGES_DIR = path.join(__dirname, '..', 'public', 'images', familyId);
+const GALLERY_CSV = path.join(__dirname, '..', 'public', 'images', familyId, 'gallery.csv');
 
 // Supported extensions
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
@@ -156,6 +162,7 @@ async function updateGalleryCSV() {
         return !file.startsWith('thumbnails') && !file.endsWith('.json');
       });
 
+    console.log(`📁 Processing family: ${familyId}`);
     console.log(`📁 Found ${localMediaFiles.length} local media file(s) in ${IMAGES_DIR}`);
 
     // Fetch Cloudinary videos and images

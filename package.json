@@ -7,10 +7,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "update-gallery": "node scripts/update-gallery.js",
-    "update-gallery-csv": "node scripts/update-gallery-csv.js",
-    "generate-thumbnails": "node scripts/generate-thumbnails.js",
-    "sort-gallery-csv": "node scripts/sort-gallery-csv.js",
-    "sync-gallery": "node scripts/sync-gallery.js",
+    "update-gallery-csv": "node scripts/update-gallery-csv.js --family=grewal",
+    "generate-thumbnails": "node scripts/generate-thumbnails.js --family=grewal",
+    "sort-gallery-csv": "node scripts/sort-gallery-csv.js --family=grewal",
+    "sync-gallery": "node scripts/sync-gallery.js --family=grewal",
     "upload-to-cdn": "node scripts/upload-to-cdn.js"
   },
   "dependencies": {

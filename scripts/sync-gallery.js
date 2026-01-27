@@ -10,11 +10,12 @@
  * 3. Syncs images.json from gallery.csv (preserves sort order)
  * 
  * Supports:
- * - Local images/videos in public/images/
+ * - Local images/videos in public/images/{family}/
  * - Cloudinary videos (fetched via API)
  * 
- * Usage: npm run sync-gallery
- *    or: node scripts/sync-gallery.js
+ * Usage: npm run sync-gallery --family=grewal
+ *    or: node scripts/sync-gallery.js --family=grewal
+ *    or: node scripts/sync-gallery.js (defaults to 'grewal')
  */
 
 import { execSync } from 'child_process';
@@ -25,14 +26,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.join(__dirname, '..');
 
-console.log('🔄 Starting gallery sync...\n');
+// Parse command line arguments for --family parameter
+const args = process.argv.slice(2);
+const familyArg = args.find(arg => arg.startsWith('--family='));
+const familyId = familyArg ? familyArg.split('=')[1] : 'grewal'; // Default to 'grewal'
+
+console.log(`🔄 Starting gallery sync for family: ${familyId}\n`);
 
 try {
   // Step 1: Update gallery.csv
   console.log('📝 Step 1: Syncing gallery.csv with files...');
   console.log('─'.repeat(50));
   try {
-    execSync('npm run update-gallery-csv', {
+    execSync(`node scripts/update-gallery-csv.js --family=${familyId}`, {
       cwd: PROJECT_ROOT,
       stdio: 'inherit'
     });
@@ -46,7 +52,7 @@ try {
   console.log('🖼️  Step 2: Generating thumbnails...');
   console.log('─'.repeat(50));
   try {
-    execSync('npm run generate-thumbnails', {
+    execSync(`node scripts/generate-thumbnails.js --family=${familyId}`, {
       cwd: PROJECT_ROOT,
       stdio: 'inherit'
     });
@@ -56,7 +62,7 @@ try {
     if (error.message.includes('sharp') || error.stderr?.toString().includes('sharp')) {
       console.error('⚠️  Warning: sharp is not installed. Skipping thumbnail generation.');
       console.error('   Install it with: npm install sharp');
-      console.error('   Then run: npm run generate-thumbnails\n');
+      console.error(`   Then run: node scripts/generate-thumbnails.js --family=${familyId}\n`);
     } else {
       console.error('❌ Error generating thumbnails:', error.message);
       // Don't exit - continue with images.json sync
@@ -67,7 +73,7 @@ try {
   console.log('📋 Step 3: Syncing images.json from gallery.csv...');
   console.log('─'.repeat(50));
   try {
-    execSync('node scripts/sync-images-json-from-csv.js', {
+    execSync(`node scripts/sync-images-json-from-csv.js --family=${familyId}`, {
       cwd: PROJECT_ROOT,
       stdio: 'inherit'
     });
