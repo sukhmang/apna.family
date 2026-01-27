@@ -1,0 +1,21 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/homevideos",
+      "destination": "https://homevideos.baljitgrewal.ca",
+      "permanent": true
+    },
+    {
+      "source": "/homevideos/:path*",
+      "destination": "https://homevideos.baljitgrewal.ca/:path*",
+      "permanent": true
+    }
+  ]
+}
+
