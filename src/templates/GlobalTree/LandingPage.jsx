@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react'
 import styled from 'styled-components'
+import { loadFamilyData } from '../../utils/dataLoader'
 
 const Container = styled.div`
   max-width: 800px;
@@ -46,46 +48,92 @@ const FamilyLink = styled.a`
   }
 `
 
+const LoadingText = styled.p`
+  font-size: ${props => props.theme.typography.sizes.base};
+  color: ${props => props.theme.colors.text.secondary};
+`
+
 /**
  * GlobalTree LandingPage - Root landing page for apna.family
- * Displays a list of available families
+ * Displays a list of available families loaded dynamically
  */
 export default function LandingPage() {
-  // TODO: Load families dynamically from data/families/ folder
-  const families = [
-    { id: 'grewal', name: 'Grewal Family' },
-    { id: 'wong', name: 'Wong Family' }
-  ]
+  const [families, setFamilies] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Load all families from data/families/ folder
+    // For now, we'll use a known list, but in the future this could be dynamic
+    // To add a new family, create src/data/families/{familyId}.json and add the ID here
+    const knownFamilies = ['grewal', 'wong'] // Can be expanded as more families are added
+    
+    const loadFamilies = async () => {
+      const familyList = []
+      
+      for (const familyId of knownFamilies) {
+        try {
+          const familyData = await loadFamilyData(familyId)
+          familyList.push({
+            id: familyId,
+            name: familyData.displayName || familyData.name || `${familyId} Family`,
+            ...familyData
+          })
+        } catch (error) {
+          // Family file doesn't exist, skip it
+          console.warn(`Family ${familyId} not found, skipping`)
+        }
+      }
+      
+      setFamilies(familyList)
+      setLoading(false)
+    }
+    
+    loadFamilies()
+  }, [])
+
+  if (loading) {
+    return (
+      <Container>
+        <Title>Apna Family Network</Title>
+        <Subtitle>Connecting families through shared memories and stories</Subtitle>
+        <LoadingText>Loading families...</LoadingText>
+      </Container>
+    )
+  }
 
   return (
     <Container>
       <Title>Apna Family Network</Title>
       <Subtitle>Connecting families through shared memories and stories</Subtitle>
       
-      <FamilyList>
-        {families.map(family => {
-          // Build subdomain URL
-          const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
-          const port = typeof window !== 'undefined' ? window.location.port : '5173'
-          const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:'
-          
-          // Extract base domain (e.g., "localhost" or "apna.family")
-          const baseDomain = currentHost.includes('.') 
-            ? currentHost.split('.').slice(-2).join('.') 
-            : currentHost
-          
-          const subdomainUrl = `${protocol}//${family.id}.${baseDomain}${port ? `:${port}` : ''}`
-          
-          return (
-            <FamilyLink 
-              key={family.id}
-              href={subdomainUrl}
-            >
-              {family.name}
-            </FamilyLink>
-          )
-        })}
-      </FamilyList>
+      {families.length === 0 ? (
+        <LoadingText>No families available yet.</LoadingText>
+      ) : (
+        <FamilyList>
+          {families.map(family => {
+            // Build subdomain URL
+            const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
+            const port = typeof window !== 'undefined' ? window.location.port : '5173'
+            const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:'
+            
+            // Extract base domain (e.g., "localhost" or "apna.family")
+            const baseDomain = currentHost.includes('.') 
+              ? currentHost.split('.').slice(-2).join('.') 
+              : currentHost
+            
+            const subdomainUrl = `${protocol}//${family.id}.${baseDomain}${port ? `:${port}` : ''}`
+            
+            return (
+              <FamilyLink 
+                key={family.id}
+                href={subdomainUrl}
+              >
+                {family.name}
+              </FamilyLink>
+            )
+          })}
+        </FamilyList>
+      )}
     </Container>
   )
 }

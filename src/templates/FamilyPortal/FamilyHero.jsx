@@ -1,5 +1,8 @@
+import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { Link } from 'react-router-dom'
+import { useFamily } from '../../contexts/FamilyContext'
+import { loadPersonData } from '../../utils/dataLoader'
 
 const Container = styled.div`
   max-width: 800px;
@@ -47,15 +50,71 @@ const StyledLink = styled(Link)`
   }
 `
 
+const LoadingText = styled.p`
+  font-size: ${props => props.theme.typography.sizes.base};
+  color: ${props => props.theme.colors.text.secondary};
+`
+
 /**
  * FamilyPortal Hero - Landing page for a specific family
  * Displays family name and links to family members and home videos
  */
 export default function FamilyHero({ familyData }) {
-  // TODO: Load people dynamically from data/people/ folder filtered by family
-  const people = [
-    { id: 'baljit', name: 'Baljit Grewal' }
-  ]
+  const { familyId } = useFamily()
+  const [people, setPeople] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!familyId) {
+      setLoading(false)
+      return
+    }
+
+    // Load people for this family
+    // We'll scan for files matching {familyId}-{personId}.json pattern
+    // For now, we'll use a known list, but this could be made dynamic
+    const loadPeople = async () => {
+      // Known people for each family (can be expanded)
+      // To add a new person, create src/data/people/{familyId}-{personId}.json and add the personId here
+      const knownPeople = {
+        'grewal': ['baljit'],
+        'wong': ['jane'] // Add person IDs as they're created
+      }
+
+      const peopleList = []
+      const personIds = knownPeople[familyId] || []
+
+      for (const personId of personIds) {
+        try {
+          const personData = await loadPersonData(familyId, personId)
+          peopleList.push({
+            id: personId,
+            name: personData.memorialData?.name || `${personId} ${familyId}`
+          })
+        } catch (error) {
+          // Person file doesn't exist, skip it
+          console.warn(`Person ${familyId}-${personId} not found, skipping`)
+        }
+      }
+
+      setPeople(peopleList)
+      setLoading(false)
+    }
+
+    loadPeople()
+  }, [familyId])
+
+  if (loading) {
+    return (
+      <Container>
+        <Title>{familyData?.displayName || familyData?.name || 'Family Portal'}</Title>
+        <Description>
+          {familyData?.description || 'Welcome to our family network'}
+        </Description>
+        <LoadingText>Loading family members...</LoadingText>
+      </Container>
+    )
+  }
 
   return (
     <Container>
@@ -65,11 +124,15 @@ export default function FamilyHero({ familyData }) {
       </Description>
       
       <LinkList>
-        {people.map(person => (
-          <StyledLink key={person.id} to={`/${person.id}`}>
-            View {person.name}'s Memorial
-          </StyledLink>
-        ))}
+        {people.length > 0 ? (
+          people.map(person => (
+            <StyledLink key={person.id} to={`/${person.id}`}>
+              View {person.name}'s Memorial
+            </StyledLink>
+          ))
+        ) : (
+          <LoadingText>No family members available yet.</LoadingText>
+        )}
         <StyledLink to="/homevideos">
           Home Videos
         </StyledLink>

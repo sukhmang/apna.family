@@ -1,0 +1,423 @@
+{
+    "meta": {
+      "version": "2.0",
+      "description": "Apna Family Network Tree Data",
+      "lastUpdated": "2026-01-26"
+    },
+    "people": [
+      {
+        "id": "sukhman_grewal",
+        "firstName": "Sukhman",
+        "lastName": "Grewal",
+        "gender": "M",
+        "currentLocation": "Vancouver, Canada",
+        "partners": ["christine_grewal"],
+        "parents": ["baljit_grewal", "renu_grewal"],
+        "children": []
+      },
+      {
+        "id": "christine_grewal",
+        "firstName": "Christine",
+        "lastName": "Grewal",
+        "maidenName": "Fann",
+        "gender": "F",
+        "currentLocation": "Vancouver, Canada",
+        "partners": ["sukhman_grewal"],
+        "parents": ["michael_fann", "audrey_fann"],
+        "children": []
+      },
+      
+      // --- GREWAL HOUSEHOLD (IMMEDIATE) ---
+      {
+        "id": "baljit_grewal",
+        "firstName": "Baljit",
+        "lastName": "Grewal",
+        "gender": "M",
+        "dob": "1953-01-01",
+        "dod": "2026-01-16",
+        "isDeceased": true,
+        "pob": "India",
+        "currentLocation": "Canada",
+        "partners": ["renu_grewal"],
+        "parents": ["ranjit_singh_grewal", "kulwant_kaur"],
+        "children": ["sukhman_grewal", "varinder_grewal", "vanita_grewal"]
+      },
+      {
+        "id": "renu_grewal",
+        "firstName": "Renu",
+        "lastName": "Grewal",
+        "maidenName": "Mann",
+        "gender": "F",
+        "currentLocation": "Canada",
+        "partners": ["baljit_grewal"],
+        "parents": ["charanjit_mann", "surubjit_mann"],
+        "children": ["sukhman_grewal", "varinder_grewal", "vanita_grewal"]
+      },
+      {
+        "id": "varinder_grewal",
+        "firstName": "Varinder",
+        "lastName": "Grewal",
+        "gender": "M",
+        "partners": ["preeti_grewal"],
+        "parents": ["baljit_grewal", "renu_grewal"],
+        "children": []
+      },
+      {
+        "id": "preeti_grewal",
+        "firstName": "Preeti",
+        "lastName": "Grewal",
+        "gender": "F",
+        "partners": ["varinder_grewal"],
+        "parents": [],
+        "children": []
+      },
+      {
+        "id": "vanita_grewal",
+        "firstName": "Vanita",
+        "lastName": "Grewal",
+        "gender": "F",
+        "partners": [],
+        "parents": ["baljit_grewal", "renu_grewal"],
+        "children": []
+      },
+  
+      // --- FANN FAMILY (IN-LAWS) ---
+      {
+        "id": "michael_fann",
+        "firstName": "Michael",
+        "lastName": "Fann",
+        "gender": "M",
+        "partners": ["audrey_fann"],
+        "parents": [],
+        "children": ["christine_grewal", "eric_fann", "megan_fann"]
+      },
+      {
+        "id": "audrey_fann",
+        "firstName": "Audrey",
+        "lastName": "Fann",
+        "gender": "F",
+        "partners": ["michael_fann"],
+        "parents": [],
+        "children": ["christine_grewal", "eric_fann", "megan_fann"]
+      },
+      {
+        "id": "eric_fann",
+        "firstName": "Eric",
+        "lastName": "Fann",
+        "gender": "M",
+        "partners": ["cherise"],
+        "parents": ["michael_fann", "audrey_fann"],
+        "children": ["mochi"]
+      },
+      {
+        "id": "cherise",
+        "firstName": "Cherise",
+        "lastName": "",
+        "gender": "F",
+        "partners": ["eric_fann"],
+        "parents": [],
+        "children": ["mochi"]
+      },
+      {
+        "id": "mochi",
+        "firstName": "Mochi",
+        "lastName": "",
+        "type": "pet",
+        "gender": "Unknown",
+        "partners": [],
+        "parents": ["eric_fann", "cherise"],
+        "children": []
+      },
+      {
+        "id": "megan_fann",
+        "firstName": "Megan",
+        "lastName": "Fann",
+        "gender": "F",
+        "partners": [],
+        "parents": ["michael_fann", "audrey_fann"],
+        "children": []
+      },
+  
+      // --- GREWAL ANCESTORS & EXTENDED ---
+      {
+        "id": "ranjit_singh_grewal",
+        "firstName": "Ranjit Singh",
+        "lastName": "Grewal",
+        "gender": "M",
+        "isDeceased": true,
+        "partners": ["kulwant_kaur"],
+        "parents": [],
+        "children": ["baljit_grewal", "avtar_grewal", "tochi_gill", "pinder"]
+      },
+      {
+        "id": "kulwant_kaur",
+        "firstName": "Kulwant",
+        "lastName": "Kaur",
+        "gender": "F",
+        "partners": ["ranjit_singh_grewal"],
+        "parents": [],
+        "children": ["baljit_grewal", "avtar_grewal", "tochi_gill", "pinder"]
+      },
+      {
+        "id": "avtar_grewal",
+        "firstName": "Avtar",
+        "lastName": "Grewal",
+        "gender": "M",
+        "partners": [],
+        "parents": ["ranjit_singh_grewal", "kulwant_kaur"],
+        "children": []
+      },
+      {
+        "id": "tochi_gill",
+        "firstName": "Tochi",
+        "lastName": "Gill",
+        "maidenName": "Grewal",
+        "gender": "F",
+        "partners": [],
+        "parents": ["ranjit_singh_grewal", "kulwant_kaur"],
+        "children": ["manni_gill"]
+      },
+      {
+        "id": "manni_gill",
+        "firstName": "Manni",
+        "lastName": "Gill",
+        "gender": "M",
+        "partners": ["simar_gill"],
+        "parents": ["tochi_gill"],
+        "children": ["angad_gill", "ekraj_gill"]
+      },
+      {
+        "id": "simar_gill",
+        "firstName": "Simar",
+        "lastName": "Gill",
+        "gender": "F",
+        "partners": ["manni_gill"],
+        "parents": [],
+        "children": ["angad_gill", "ekraj_gill"]
+      },
+      {
+        "id": "angad_gill",
+        "firstName": "Angad",
+        "lastName": "Gill",
+        "gender": "M",
+        "partners": [],
+        "parents": ["manni_gill", "simar_gill"],
+        "children": []
+      },
+      {
+        "id": "ekraj_gill",
+        "firstName": "Ekraj",
+        "lastName": "Gill",
+        "gender": "M",
+        "partners": [],
+        "parents": ["manni_gill", "simar_gill"],
+        "children": []
+      },
+      {
+        "id": "pinder",
+        "firstName": "Pinder",
+        "lastName": "",
+        "maidenName": "Grewal",
+        "gender": "F",
+        "partners": [],
+        "parents": ["ranjit_singh_grewal", "kulwant_kaur"],
+        "children": ["bobby", "ritu_randhawa"]
+      },
+      {
+        "id": "bobby",
+        "firstName": "Bobby",
+        "lastName": "",
+        "gender": "M",
+        "partners": [],
+        "parents": ["pinder"],
+        "children": []
+      },
+      {
+        "id": "ritu_randhawa",
+        "firstName": "Ritu",
+        "lastName": "Randhawa",
+        "gender": "F",
+        "partners": [],
+        "parents": ["pinder"],
+        "children": ["pukhraj", "yovrag"]
+      },
+      {
+        "id": "pukhraj",
+        "firstName": "Pukhraj",
+        "lastName": "",
+        "gender": "M",
+        "partners": [],
+        "parents": ["ritu_randhawa"],
+        "children": []
+      },
+      {
+        "id": "yovrag",
+        "firstName": "Yovrag",
+        "lastName": "",
+        "gender": "M",
+        "partners": [],
+        "parents": ["ritu_randhawa"],
+        "children": []
+      },
+  
+      // --- MANN ANCESTORS & EXTENDED (Maternal) ---
+      {
+        "id": "charanjit_mann",
+        "firstName": "Charanjit",
+        "lastName": "Mann",
+        "gender": "M",
+        "partners": ["surubjit_mann"],
+        "parents": [],
+        "children": ["renu_grewal", "bittum_narula", "raman_mann", "mini_wong", "shelly_virk"]
+      },
+      {
+        "id": "surubjit_mann",
+        "firstName": "Surubjit",
+        "lastName": "Mann",
+        "gender": "F",
+        "partners": ["charanjit_mann"],
+        "parents": [],
+        "children": ["renu_grewal", "bittum_narula", "raman_mann", "mini_wong", "shelly_virk"]
+      },
+      {
+        "id": "bittum_narula",
+        "firstName": "Bittum",
+        "lastName": "Narula",
+        "maidenName": "Mann",
+        "nickname": "Bittum",
+        "gender": "F",
+        "partners": ["raj_narula"],
+        "parents": ["charanjit_mann", "surubjit_mann"],
+        "children": ["vikram_narula", "maanav_narula"]
+      },
+      {
+        "id": "raj_narula",
+        "firstName": "Raj",
+        "lastName": "Narula",
+        "gender": "M",
+        "partners": ["bittum_narula"],
+        "parents": [],
+        "children": ["vikram_narula", "maanav_narula"]
+      },
+      {
+        "id": "vikram_narula",
+        "firstName": "Vikram",
+        "lastName": "Narula",
+        "gender": "M",
+        "partners": [],
+        "parents": ["bittum_narula", "raj_narula"],
+        "children": []
+      },
+      {
+        "id": "maanav_narula",
+        "firstName": "Maanav",
+        "lastName": "Narula",
+        "gender": "M",
+        "partners": [],
+        "parents": ["bittum_narula", "raj_narula"],
+        "children": []
+      },
+      {
+        "id": "raman_mann",
+        "firstName": "Raman",
+        "lastName": "Mann",
+        "gender": "M",
+        "partners": ["gangdeep_mann"],
+        "parents": ["charanjit_mann", "surubjit_mann"],
+        "children": ["arjun_mann", "nikita_mann", "priyanka_mann"]
+      },
+      {
+        "id": "gangdeep_mann",
+        "firstName": "Gangdeep",
+        "lastName": "Mann",
+        "gender": "F",
+        "partners": ["raman_mann"],
+        "parents": [],
+        "children": ["arjun_mann", "nikita_mann", "priyanka_mann"]
+      },
+      {
+        "id": "arjun_mann",
+        "firstName": "Arjun",
+        "lastName": "Mann",
+        "gender": "M",
+        "partners": [],
+        "parents": ["raman_mann", "gangdeep_mann"],
+        "children": []
+      },
+      {
+        "id": "nikita_mann",
+        "firstName": "Nikita",
+        "lastName": "Mann",
+        "gender": "F",
+        "partners": [],
+        "parents": ["raman_mann", "gangdeep_mann"],
+        "children": []
+      },
+      {
+        "id": "priyanka_mann",
+        "firstName": "Priyanka",
+        "lastName": "Mann",
+        "gender": "F",
+        "partners": [],
+        "parents": ["raman_mann", "gangdeep_mann"],
+        "children": []
+      },
+      {
+        "id": "mini_wong",
+        "firstName": "Mini",
+        "lastName": "Wong",
+        "maidenName": "Mann",
+        "gender": "F",
+        "isDeceased": true,
+        "partners": ["steve_wong"],
+        "parents": ["charanjit_mann", "surubjit_mann"],
+        "children": ["jade_wong", "chanelle_wong"]
+      },
+      {
+        "id": "steve_wong",
+        "firstName": "Steve",
+        "lastName": "Wong",
+        "gender": "M",
+        "partners": ["mini_wong"],
+        "parents": [],
+        "children": ["jade_wong", "chanelle_wong"]
+      },
+      {
+        "id": "jade_wong",
+        "firstName": "Jade",
+        "lastName": "Wong",
+        "gender": "F",
+        "partners": [],
+        "parents": ["mini_wong", "steve_wong"],
+        "children": []
+      },
+      {
+        "id": "chanelle_wong",
+        "firstName": "Chanelle",
+        "lastName": "Wong",
+        "gender": "F",
+        "partners": [],
+        "parents": ["mini_wong", "steve_wong"],
+        "children": []
+      },
+      {
+        "id": "shelly_virk",
+        "firstName": "Shelly",
+        "lastName": "Virk",
+        "maidenName": "Mann",
+        "gender": "F",
+        "partners": [],
+        "parents": ["charanjit_mann", "surubjit_mann"],
+        "children": ["deepak_virk"]
+      },
+      {
+        "id": "deepak_virk",
+        "firstName": "Deepak",
+        "lastName": "Virk",
+        "gender": "M",
+        "partners": [],
+        "parents": ["shelly_virk"],
+        "children": []
+      }
+    ]
+  }

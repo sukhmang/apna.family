@@ -1,0 +1,12 @@
+{
+  "id": "wong",
+  "name": "Wong Family",
+  "displayName": "The Wongs",
+  "theme": {
+    "primaryColor": "#059669",
+    "accentColor": "#10b981",
+    "accentHover": "#047857"
+  },
+  "homeVideosPassword": null,
+  "description": "A family network celebrating the lives and memories of the Wong family."
+}

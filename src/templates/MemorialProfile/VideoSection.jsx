@@ -457,37 +457,6 @@ export default function VideoSection() {
     return `https://www.youtube.com/embed/${eventData.youtubeLoopVideoId}?loop=1&playlist=${eventData.youtubeLoopVideoId}&rel=0`
   }
 
-  // Render small countdown component
-  const renderSmallCountdown = () => {
-    if (!timeRemaining) return null
-    
-    return (
-      <SmallCountdownContainer>
-        <SmallCountdownTitle>
-          Livestream begins on {EVENT_DATA.displayDate} at {EVENT_DATA.livestreamDisplayTime || EVENT_DATA.displayTime}
-        </SmallCountdownTitle>
-        <SmallCountdownGrid>
-          <SmallCountdownItem>
-            <SmallCountdownValue>{timeRemaining.days}</SmallCountdownValue>
-            <SmallCountdownLabel>Days</SmallCountdownLabel>
-          </SmallCountdownItem>
-          <SmallCountdownItem>
-            <SmallCountdownValue>{timeRemaining.hours}</SmallCountdownValue>
-            <SmallCountdownLabel>Hours</SmallCountdownLabel>
-          </SmallCountdownItem>
-          <SmallCountdownItem>
-            <SmallCountdownValue>{timeRemaining.minutes}</SmallCountdownValue>
-            <SmallCountdownLabel>Minutes</SmallCountdownLabel>
-          </SmallCountdownItem>
-          <SmallCountdownItem>
-            <SmallCountdownValue>{timeRemaining.seconds}</SmallCountdownValue>
-            <SmallCountdownLabel>Seconds</SmallCountdownLabel>
-          </SmallCountdownItem>
-        </SmallCountdownGrid>
-      </SmallCountdownContainer>
-    )
-  }
-
   // Show videos directly (recorded content, no modal needed)
   return (
     <Card id="watch">
