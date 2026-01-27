@@ -191,15 +191,6 @@ export function UserMenu() {
   const [loadingPermissions, setLoadingPermissions] = useState(false)
   const dropdownRef = useRef(null)
 
-  // Debug: Log to verify component is rendering
-  useEffect(() => {
-    console.log('🔍 UserMenu Debug:', { 
-      isRoot, 
-      authLoading, 
-      hasUser: !!user,
-      hostname: typeof window !== 'undefined' ? window.location.hostname : 'N/A'
-    })
-  }, [isRoot, authLoading, user])
 
   useEffect(() => {
     if (user && user.email) {
@@ -287,15 +278,11 @@ export function UserMenu() {
 
   // Only show on root domain
   if (!isRoot) {
-    console.log('🔍 UserMenu: Not on root domain, returning null')
     return null
   }
 
-  console.log('🔍 UserMenu: On root domain, rendering. authLoading:', authLoading, 'user:', !!user)
-
   // Show loading state (but still show the button)
   if (authLoading) {
-    console.log('🔍 UserMenu: Showing loading state')
     return (
       <UserMenuContainer>
         <GoogleSignInButton disabled style={{ opacity: 0.6 }}>
@@ -308,7 +295,6 @@ export function UserMenu() {
 
   // Show sign in button when not logged in
   if (!user) {
-    console.log('🔍 UserMenu: No user, showing sign in button')
     return (
       <UserMenuContainer>
         <GoogleSignInButton onClick={handleGoogleSignIn} type="button">
@@ -318,8 +304,6 @@ export function UserMenu() {
       </UserMenuContainer>
     )
   }
-
-  console.log('🔍 UserMenu: User logged in, showing user menu')
 
   return (
     <UserMenuContainer ref={dropdownRef}>

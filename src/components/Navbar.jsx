@@ -59,6 +59,28 @@ const BreadcrumbSection = styled.div`
   }
 `
 
+const BrandLogo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: ${props => props.theme.typography.sizes.lg};
+  font-weight: ${props => props.theme.typography.weights.bold};
+  color: ${props => props.theme.colors.text.primary};
+  text-decoration: none;
+  margin-right: auto;
+  
+  @media (min-width: 640px) {
+    font-size: ${props => props.theme.typography.sizes.xl};
+  }
+`
+
+const BrandName = styled.span`
+  background: linear-gradient(135deg, ${props => props.theme.colors.accent} 0%, ${props => props.theme.colors.accentHover} 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+`
+
 const BreadcrumbLeft = styled.div`
   display: flex;
   align-items: center;
@@ -631,6 +653,11 @@ export default function Navbar() {
       <NavContainer>
         {showBreadcrumbs && (
           <BreadcrumbSection>
+            {isRootDomain() && (
+              <BrandLogo>
+                <BrandName>Apna Family</BrandName>
+              </BrandLogo>
+            )}
             <BreadcrumbLeft>
               {breadcrumbs.map((crumb, index) => {
                 const Icon = crumb.icon
@@ -661,6 +688,11 @@ export default function Navbar() {
         )}
         {!showBreadcrumbs && (
           <BreadcrumbSection>
+            {isRootDomain() && (
+              <BrandLogo>
+                <BrandName>Apna Family</BrandName>
+              </BrandLogo>
+            )}
             <BreadcrumbLeft>
               <BreadcrumbLink href="/">
                 <Home />
