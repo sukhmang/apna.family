@@ -3,6 +3,7 @@ import Navbar from '../../components/Navbar'
 import { useFamily } from '../../contexts/FamilyContext'
 import { useState, useEffect } from 'react'
 import { loadPersonData } from '../../utils/dataLoader'
+import { withMinimumDelay } from '../../utils/loadingDelay'
 import VideoGrid from './VideoGrid'
 
 /**
@@ -25,7 +26,8 @@ export default function VideoVaultPage() {
     // In the future, this could be family-level data
     const defaultPersonId = 'baljit' // TODO: Make this configurable or load from family data
     
-    loadPersonData(familyId, defaultPersonId)
+    // Load with minimum delay for smooth animations
+    withMinimumDelay(loadPersonData(familyId, defaultPersonId), 1000)
       .then(data => {
         setHomeVideos(data?.homeVideos || [])
         setLoading(false)

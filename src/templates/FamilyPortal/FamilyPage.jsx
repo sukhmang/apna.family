@@ -2,6 +2,7 @@ import Layout from '../../components/Layout'
 import Navbar from '../../components/Navbar'
 import { useFamily } from '../../contexts/FamilyContext'
 import FamilyHero from './FamilyHero'
+import FamilyHeroSkeleton from '../../components/Skeletons/FamilyHeroSkeleton'
 
 /**
  * FamilyPortal Page - Wrapper that provides family context
@@ -10,22 +11,15 @@ import FamilyHero from './FamilyHero'
 export default function FamilyPage() {
   const { familyData, loading } = useFamily()
 
-  if (loading) {
-    return (
-      <>
-        <Navbar />
-        <Layout>
-          <div>Loading...</div>
-        </Layout>
-      </>
-    )
-  }
-
   return (
     <>
       <Navbar />
       <Layout>
-        <FamilyHero familyData={familyData} />
+        {loading ? (
+          <FamilyHeroSkeleton />
+        ) : (
+          <FamilyHero familyData={familyData} />
+        )}
       </Layout>
     </>
   )

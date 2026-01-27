@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { getFamilyId } from '../utils/subdomain'
 import { loadFamilyData } from '../utils/dataLoader'
+import { withMinimumDelay } from '../utils/loadingDelay'
 
 export const FamilyContext = createContext(null)
 
@@ -23,8 +24,8 @@ export function FamilyProvider({ children }) {
       return
     }
 
-    // Load family data
-    loadFamilyData(familyId)
+    // Load family data with minimum delay for smooth animations
+    withMinimumDelay(loadFamilyData(familyId), 1000)
       .then(data => {
         setFamilyData({ ...data, id: familyId })
         setLoading(false)

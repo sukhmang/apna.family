@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { loadFamilyData } from '../../utils/dataLoader'
+import { withMinimumDelay } from '../../utils/loadingDelay'
 
 const Container = styled.div`
   max-width: 800px;
@@ -70,21 +71,30 @@ export default function LandingPage() {
     const loadFamilies = async () => {
       const familyList = []
       
-      for (const familyId of knownFamilies) {
+      // Load all families
+      const loadPromises = knownFamilies.map(async (familyId) => {
         try {
           const familyData = await loadFamilyData(familyId)
-          familyList.push({
+          return {
             id: familyId,
             name: familyData.displayName || familyData.name || `${familyId} Family`,
             ...familyData
-          })
+          }
         } catch (error) {
           // Family file doesn't exist, skip it
           console.warn(`Family ${familyId} not found, skipping`)
+          return null
         }
-      }
+      })
+
+      // Wait for all loads with minimum delay
+      const results = await Promise.all(loadPromises)
+      const validFamilies = results.filter(f => f !== null)
       
-      setFamilies(familyList)
+      // Ensure minimum delay for smooth animations
+      await withMinimumDelay(Promise.resolve(validFamilies), 1000)
+      
+      setFamilies(validFamilies)
       setLoading(false)
     }
     
