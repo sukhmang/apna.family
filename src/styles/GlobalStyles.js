@@ -10,6 +10,18 @@ export const GlobalStyles = createGlobalStyle`
   html, body {
     width: 100%;
     overflow-x: hidden;
+    /* Ensure sticky positioning works */
+    position: relative;
+  }
+  
+  html {
+    /* Ensure html is the scrolling container for sticky */
+    height: 100%;
+  }
+  
+  body {
+    /* Ensure body is the scrolling container */
+    min-height: 100%;
   }
 
   body {

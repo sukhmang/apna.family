@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
-import { Play, Clock, Radio, X, Info } from 'lucide-react'
+import { Play, Clock, Radio, X, Info, BookOpen } from 'lucide-react'
 import { usePerson } from '../../contexts/PersonContext'
 
 const Card = styled.div`
@@ -436,6 +436,63 @@ const NoVideoMessage = styled.div`
   font-size: ${props => props.theme.typography.sizes.base};
 `
 
+const StoriesSection = styled.div`
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid ${props => props.theme.colors.border};
+`
+
+const StoriesTitle = styled.h2`
+  font-size: ${props => props.theme.typography.sizes['2xl']};
+  font-weight: ${props => props.theme.typography.weights.bold};
+  color: ${props => props.theme.colors.text.primary};
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+`
+
+const ComingSoonBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  background-color: ${props => props.theme.colors.text.secondary}15;
+  border: 1px solid ${props => props.theme.colors.text.secondary}40;
+  border-radius: ${props => props.theme.borderRadius.sm};
+  font-size: ${props => props.theme.typography.sizes.xs};
+  font-weight: ${props => props.theme.typography.weights.semibold};
+  color: ${props => props.theme.colors.text.secondary};
+`
+
+const SubmitButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  background-color: ${props => props.theme.colors.accent}15;
+  border: 1px solid ${props => props.theme.colors.accent}40;
+  border-radius: ${props => props.theme.borderRadius.sm};
+  font-size: ${props => props.theme.typography.sizes.xs};
+  font-weight: ${props => props.theme.typography.weights.semibold};
+  color: ${props => props.theme.colors.accent};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 0.5rem;
+
+  &:hover {
+    background-color: ${props => props.theme.colors.accent}25;
+    border-color: ${props => props.theme.colors.accent}60;
+  }
+`
+
+const StoriesContent = styled.div`
+  text-align: center;
+  padding: 3rem 2rem;
+  color: ${props => props.theme.colors.text.secondary};
+  font-size: ${props => props.theme.typography.sizes.base};
+  line-height: 1.6;
+`
+
 export default function VideoSection() {
   const { eventData, memorialData } = usePerson()
   
@@ -457,9 +514,17 @@ export default function VideoSection() {
     return `https://www.youtube.com/embed/${eventData.youtubeLoopVideoId}?loop=1&playlist=${eventData.youtubeLoopVideoId}&rel=0`
   }
 
+  const handleEmailSubmit = () => {
+    // Use first name or full name for email subject
+    const firstName = memorialData?.name?.split(' ')[0] || memorialData?.name || 'Loved One'
+    const subject = encodeURIComponent(`My favorite story about ${firstName}`)
+    const body = encodeURIComponent(`I am ______ and i know ${firstName} in the following way: ______`)
+    window.location.href = `mailto:billgrewalpics@gmail.com?subject=${subject}&body=${body}`
+  }
+
   // Show videos directly (recorded content, no modal needed)
   return (
-    <Card id="watch">
+    <Card id="memories">
       <VideosContainer>
         {/* Memories on top */}
         {eventData.youtubeLoopVideoId ? (
@@ -500,6 +565,24 @@ export default function VideoSection() {
           </VideoWrapper>
         )}
       </VideosContainer>
+
+      {/* Stories section merged into Memories */}
+      <StoriesSection>
+        <StoriesTitle>
+          <BookOpen size={28} />
+          Stories
+          <ComingSoonBadge>Coming soon</ComingSoonBadge>
+          <SubmitButton
+            onClick={handleEmailSubmit}
+            aria-label="Submit your story"
+          >
+            Submit your story!
+          </SubmitButton>
+        </StoriesTitle>
+        <StoriesContent>
+          Share your memories and stories about {memorialData?.name || 'this loved one'}. Stories will be displayed here soon.
+        </StoriesContent>
+      </StoriesSection>
     </Card>
   )
 }

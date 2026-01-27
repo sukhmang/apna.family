@@ -1,1 +1,3 @@
-images will be uploaded to cloudinary. in the script to sync for gallery csv, we should also save the people identified in the image. this is so that images/videos linked to a person can appear there.
+- add a loading animation when links are clicked with attactive overlay.
+
+-images will be uploaded to cloudinary. in the script to sync for gallery csv, we should also save the people identified in the image. this is so that images/videos linked to a person can appear there.
