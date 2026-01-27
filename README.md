@@ -1,8 +1,3 @@
-Here is the fully updated **README.md** for the **Apna Family Network**.
-
-This document serves as both your **technical documentation** and your **architectural blueprint**. It details how the single-site code has been transformed into a multi-tenant family platform, how the wildcard routing works, and how to manage data for different families (Grewals, Wongs, etc.) while keeping the media pipeline robust.
-
----
 
 # The Apna Family Network
 
@@ -157,9 +152,14 @@ npm run dev
 
 ### Adding a New Family (`grewal`)
 
-1. Create `src/data/families/grewal.json`.
-2. Define the family name, primary theme color, and home video password.
+1. **Add people to `tree.json`** with the new `familyId` (e.g., `"grewal"`). The family will be automatically discovered from `tree.json`.
+2. **Optional:** Create `src/data/families/grewal.json` to customize:
+   - Family display name
+   - Theme colors
+   - Home videos password
+   - Description
 3. Create a folder `public/images/grewal/` for their assets.
+4. **Important:** If you create a new `families/{familyId}.json` file, you must **rebuild the app** (`npm run build`) for it to be discovered. The app uses Vite's `import.meta.glob` which is evaluated at build time. However, families will still appear on the root landing page even without a config file (with a default display name).
 
 ### Adding a New Person
 
@@ -169,8 +169,9 @@ npm run dev
    - `firstName`, `lastName`, and other basic info
    - `hasFullProfile: false` (or omit - defaults to false)
    - `familyId`: `"grewal"` (optional, can be derived from ID)
-2. Person will be automatically available at `grewal.apna.family/sukhman`
+2. Person will be **immediately available** at `grewal.apna.family/sukhman` (no rebuild needed)
 3. Profile will show basic info from tree.json (name, dates, relationships)
+4. **No rebuild required** - `tree.json` changes are picked up immediately
 
 **Option 2: Full Memorial Profile**
 1. Add person entry to `src/data/tree.json` with `hasFullProfile: true`
@@ -179,12 +180,18 @@ npm run dev
    - `memorialData`: Name, dates, bio, portrait image
    - `eventData`: Funeral service details, YouTube video IDs
    - `homeVideos`: Array of home video objects
-4. The app will automatically serve this at `grewal.apna.family/{personId}`
+4. **Important:** You must **rebuild the app** (`npm run build`) for the person JSON file to be discovered. The app uses Vite's `import.meta.glob` which is evaluated at build time. However, the person will still be accessible with a minimal profile from `tree.json` until the rebuild completes.
 
 **ID Format Conversion:**
 - tree.json uses: `"baljit_grewal"` (personId_familyId)
 - File system uses: `"grewal-baljit.json"` (familyId-personId)
 - The system automatically converts between formats
+
+**Build Requirements:**
+- **`tree.json` changes:** No rebuild needed - changes are picked up immediately
+- **New `families/{id}.json` files:** Rebuild required (`npm run build`)
+- **New `people/{familyId}-{personId}.json` files:** Rebuild required (`npm run build`)
+- **Note:** The app gracefully handles missing files - families get default names, people get minimal profiles from `tree.json`
 
 **Example tree.json Entry:**
 ```json
@@ -332,6 +339,11 @@ The domain uses **Custom Nameservers** to give Vercel full control over subdomai
 - `loadPersonData(familyId, personId)` - Loads person memorial data from `src/data/people/{familyId}-{personId}.json`
 
 **Usage:** Used by contexts (`FamilyContext`, `PersonContext`) to load data on-demand. Files are loaded lazily to keep initial bundle size small.
+
+**Important:** `import.meta.glob` is evaluated at **build time**, not runtime. This means:
+- New `families/*.json` or `people/*.json` files added after build won't be discovered until you rebuild
+- In development mode, Vite may hot-reload new files, but production builds require a full rebuild
+- The app gracefully handles missing files (families get defaults, people fall back to `tree.json` minimal profiles)
 
 ---
 

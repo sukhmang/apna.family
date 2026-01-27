@@ -26,7 +26,11 @@ export async function loadFamilyData(familyId) {
     const data = await module()
     return data.default || data
   } catch (error) {
-    console.error(`Error loading family data for ${familyId}:`, error)
+    // Silently fail - missing family files are expected and handled gracefully
+    // Only log in development mode
+    if (import.meta.env.DEV) {
+      console.debug(`Family data file not found for ${familyId}, using defaults`)
+    }
     throw error
   }
 }

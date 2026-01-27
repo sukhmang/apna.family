@@ -3,9 +3,10 @@ import styled from 'styled-components'
 import { loadFamilyData } from '../../utils/dataLoader'
 import { withMinimumDelay } from '../../utils/loadingDelay'
 import { getAllFamilyIdsFromTree } from '../../utils/treeLoader'
+import FamilyTreeViewer from '../../components/FamilyTree/FamilyTreeViewer'
 
 const Container = styled.div`
-  max-width: 800px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 2rem 1rem;
   text-align: center;
@@ -55,11 +56,48 @@ const LoadingText = styled.p`
   color: ${props => props.theme.colors.text.secondary};
 `
 
+const ViewToggle = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+`
+
+const ToggleButton = styled.button`
+  padding: 0.5rem 1rem;
+  font-size: ${props => props.theme.typography.sizes.sm};
+  font-weight: ${props => props.theme.typography.weights.semibold};
+  color: ${props => props.$active 
+    ? props.theme.colors.cardBackground 
+    : props.theme.colors.text.secondary};
+  background-color: ${props => props.$active 
+    ? props.theme.colors.accent 
+    : props.theme.colors.cardBackground};
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: ${props => props.theme.borderRadius.md};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: ${props => props.$active 
+      ? props.theme.colors.accentHover 
+      : props.theme.colors.border};
+  }
+`
+
+const TreeContainer = styled.div`
+  width: 100%;
+  max-width: 100%;
+  margin-top: 2rem;
+  overflow: hidden;
+`
+
 /**
  * GlobalTree LandingPage - Root landing page for apna.family
- * Displays a list of available families loaded dynamically
+ * Displays interactive family tree visualization (unified tree showing all families)
  */
 export default function LandingPage() {
+  const [viewMode, setViewMode] = useState('tree') // 'tree' | 'list'
   const [families, setFamilies] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -90,6 +128,7 @@ export default function LandingPage() {
           } catch (error) {
             // Family file doesn't exist, create a default entry from the family ID
             // This allows families to appear even without a config file
+            // This is expected behavior - not all families need config files
             const displayName = familyId
               .split('_')
               .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -140,33 +179,56 @@ export default function LandingPage() {
       <Title>Apna Family Network</Title>
       <Subtitle>Connecting families through shared memories and stories</Subtitle>
       
-      {families.length === 0 ? (
-        <LoadingText>No families available yet.</LoadingText>
+      <ViewToggle>
+        <ToggleButton 
+          $active={viewMode === 'tree'}
+          onClick={() => setViewMode('tree')}
+        >
+          Tree View
+        </ToggleButton>
+        <ToggleButton 
+          $active={viewMode === 'list'}
+          onClick={() => setViewMode('list')}
+        >
+          List View
+        </ToggleButton>
+      </ViewToggle>
+
+      {viewMode === 'tree' ? (
+        <TreeContainer>
+          <FamilyTreeViewer familyId={null} />
+        </TreeContainer>
       ) : (
-        <FamilyList>
-          {families.map(family => {
-            // Build subdomain URL
-            const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
-            const port = typeof window !== 'undefined' ? window.location.port : '5173'
-            const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:'
-            
-            // Extract base domain (e.g., "localhost" or "apna.family")
-            const baseDomain = currentHost.includes('.') 
-              ? currentHost.split('.').slice(-2).join('.') 
-              : currentHost
-            
-            const subdomainUrl = `${protocol}//${family.id}.${baseDomain}${port ? `:${port}` : ''}`
-            
-            return (
-              <FamilyLink 
-                key={family.id}
-                href={subdomainUrl}
-              >
-                {family.name}
-              </FamilyLink>
-            )
-          })}
-        </FamilyList>
+        <>
+          {families.length === 0 ? (
+            <LoadingText>No families available yet.</LoadingText>
+          ) : (
+            <FamilyList>
+              {families.map(family => {
+                // Build subdomain URL
+                const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
+                const port = typeof window !== 'undefined' ? window.location.port : '5173'
+                const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:'
+                
+                // Extract base domain (e.g., "localhost" or "apna.family")
+                const baseDomain = currentHost.includes('.') 
+                  ? currentHost.split('.').slice(-2).join('.') 
+                  : currentHost
+                
+                const subdomainUrl = `${protocol}//${family.id}.${baseDomain}${port ? `:${port}` : ''}`
+                
+                return (
+                  <FamilyLink 
+                    key={family.id}
+                    href={subdomainUrl}
+                  >
+                    {family.name}
+                  </FamilyLink>
+                )
+              })}
+            </FamilyList>
+          )}
+        </>
       )}
     </Container>
   )
