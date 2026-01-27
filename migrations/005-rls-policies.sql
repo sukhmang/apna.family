@@ -110,13 +110,20 @@ CREATE POLICY "Family admins can delete people in their family"
 
 -- Create a security definer function that bypasses RLS to check permissions
 -- This prevents infinite recursion when checking if a user is super_admin
+-- Handles NULL email (when user is not logged in)
 CREATE OR REPLACE FUNCTION check_is_super_admin(user_email_param TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
+STABLE
 AS $$
 BEGIN
+  -- Return false if email is NULL (user not logged in)
+  IF user_email_param IS NULL THEN
+    RETURN FALSE;
+  END IF;
+  
   RETURN EXISTS (
     SELECT 1 FROM user_permissions
     WHERE user_permissions.user_email = user_email_param
@@ -130,10 +137,14 @@ $$;
 -- Step 5: RLS Policies for `user_permissions` Table
 -- ============================================
 
--- Policy: Users can view their own permissions
+-- Policy: Users can view their own permissions OR super admins can view all
+-- Uses helper function to avoid infinite recursion
 CREATE POLICY "Users can view their own permissions"
   ON user_permissions FOR SELECT
-  USING (user_email = auth.jwt() ->> 'email');
+  USING (
+    user_email = auth.jwt() ->> 'email'
+    OR check_is_super_admin(auth.jwt() ->> 'email')
+  );
 
 -- Policy: Only super_admins can manage permissions
 -- Uses the helper function to avoid infinite recursion
