@@ -58,12 +58,17 @@ export function AuthButton() {
   }
 
   useEffect(() => {
-    if (user) {
-      // On root domain, check if user is super_admin or has any family permissions
-      // For now, we'll just show if they're logged in (permission checking can be enhanced later)
-      setCanEdit(true) // Simplified for root domain - can enhance with permission check later
-      setPermissionLoading(false)
+    if (user && user.email) {
+      // Check if user has any edit permissions (super_admin or family admin/editor)
+      checkFamilyPermission(user.email, null).then(({ canEdit: edit }) => {
+        setCanEdit(edit)
+        setPermissionLoading(false)
+      }).catch(() => {
+        setCanEdit(false)
+        setPermissionLoading(false)
+      })
     } else {
+      setCanEdit(false)
       setPermissionLoading(false)
     }
   }, [user])

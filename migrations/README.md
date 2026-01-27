@@ -130,11 +130,93 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 - [ ] Test app functionality
 - [ ] Run `005-rls-policies.sql` in DEV (after authentication works)
 - [ ] Test permissions and RLS policies
+- [ ] Run `006-data-verification.sql` queries to verify data integrity
+- [ ] Complete `006-testing-checklist.md` for comprehensive testing
+- [ ] Fix any issues found during testing
 - [ ] Repeat all steps in PRD
 
 ### Adding New Super Admin
 - [ ] Run `003-add-super-admin.sql` with new email
 - [ ] Verify permission in Supabase Dashboard
+
+---
+
+### 005-rls-policies.sql
+**Purpose:** Enable Row Level Security (RLS) and create security policies
+
+**When to run:** After authentication is working (Milestone 4), before testing permissions
+
+**How to run:**
+1. Open Supabase Dashboard → SQL Editor
+2. Copy and paste the entire contents of `005-rls-policies.sql`
+3. Click "Run" (or press Cmd/Ctrl + Enter)
+4. Verify policies are created (check verification queries at bottom)
+
+**What it does:**
+- Enables RLS on `families`, `people`, and `user_permissions` tables
+- Creates policies for public read access
+- Creates policies for role-based edit access (super_admin, admin, editor)
+- Enforces permissions at the database level
+
+**Important Notes:**
+- RLS policies enforce security at the database level
+- Even if frontend code tries to edit, RLS will block unauthorized changes
+- Super admins can edit all families
+- Family admins/editors can only edit their assigned family
+- Unauthenticated users can read but not edit
+
+**Testing:**
+- After running, test that logged-in users can read data
+- Test that super_admin can edit
+- Test that users without permissions cannot edit (should get RLS error)
+
+---
+
+### 006-testing-checklist.md
+**Purpose:** Comprehensive testing checklist for Milestone 6
+
+**When to use:** After all migrations are complete, before production deployment
+
+**How to use:**
+1. Open `006-testing-checklist.md`
+2. Go through each section systematically
+3. Check off items as you test them
+4. Document any bugs or issues found
+5. Fix issues before proceeding to production
+
+**What it covers:**
+- Root domain testing
+- Family portal testing
+- Person/memorial page testing
+- Video vault testing
+- Authentication & permissions testing
+- Performance testing
+- Data integrity testing
+- Error handling testing
+- Production readiness
+
+---
+
+### 006-data-verification.sql
+**Purpose:** SQL queries to verify data migration completeness and integrity
+
+**When to run:** After data migration (002), and during testing (006)
+
+**How to run:**
+1. Open Supabase Dashboard → SQL Editor
+2. Run individual queries or sections as needed
+3. Compare results to expected values
+4. Investigate any discrepancies
+
+**What it checks:**
+- Record counts (families, people, permissions)
+- Missing family IDs
+- Relationship integrity
+- Data completeness
+- Profile data structure
+- Permission setup
+- RLS policy status
+- Index existence
 
 ---
 

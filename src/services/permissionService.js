@@ -3,7 +3,7 @@ import { supabase } from '../utils/supabaseClient'
 /**
  * Check if user has permission to edit a family
  * @param {string} userEmail - User's email
- * @param {string} familyId - Family ID to check
+ * @param {string|null} familyId - Family ID to check (null for root domain / any family)
  * @returns {Promise<{canEdit: boolean, role: string|null}>}
  */
 export const checkFamilyPermission = async (userEmail, familyId) => {
@@ -23,6 +23,22 @@ export const checkFamilyPermission = async (userEmail, familyId) => {
 
     if (superAdmin) {
       return { canEdit: true, role: 'super_admin' }
+    }
+
+    // If familyId is null (root domain), check if user has ANY family permission
+    if (familyId === null) {
+      const { data: anyPermission } = await supabase
+        .from('user_permissions')
+        .select('role')
+        .eq('user_email', userEmail)
+        .in('role', ['admin', 'editor'])
+        .limit(1)
+        .single()
+
+      if (anyPermission) {
+        return { canEdit: true, role: anyPermission.role }
+      }
+      return { canEdit: false, role: null }
     }
 
     // Check for family-specific permission
