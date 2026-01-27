@@ -5,6 +5,7 @@ import { Heart, User, Images, Home, ChevronRight } from 'lucide-react'
 import { PersonContext } from '../contexts/PersonContext'
 import { FamilyContext } from '../contexts/FamilyContext'
 import { parseSubdomain, isRootDomain } from '../utils/subdomain'
+import { UserMenu } from './UserMenu'
 
 const shimmer = keyframes`
   0% {
@@ -50,6 +51,7 @@ const BreadcrumbSection = styled.div`
   justify-content: space-between;
   gap: 0.1875rem;
   flex-wrap: wrap;
+  position: relative;
   
   @media (min-width: 640px) {
     padding: 0.375rem 0;
@@ -654,6 +656,7 @@ export default function Navbar() {
                 )
               })}
             </BreadcrumbLeft>
+            <UserMenu />
           </BreadcrumbSection>
         )}
         {!showBreadcrumbs && (
@@ -664,6 +667,7 @@ export default function Navbar() {
                 Home
               </BreadcrumbLink>
             </BreadcrumbLeft>
+            <UserMenu />
           </BreadcrumbSection>
         )}
         {showSectionNav && (
