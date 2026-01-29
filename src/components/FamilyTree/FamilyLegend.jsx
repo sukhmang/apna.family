@@ -4,6 +4,11 @@ import { getAllFamilyIdsFromTree } from '../../utils/treeLoader'
 import { loadFamilyData } from '../../utils/dataLoader'
 import { getFamilyColorSync } from '../../utils/familyColors'
 
+const normalizeFamilyLabel = (name) => {
+  if (!name) return null
+  return name.replace(/^The\s+/i, '').trim()
+}
+
 const LegendContainer = styled.div`
   position: absolute;
   top: 1rem;
@@ -86,14 +91,15 @@ export default function FamilyLegend({ familyId = null }) {
             const color = getFamilyColorSync(familyId)
             setFamilies([{
               id: familyId,
-              name: familyData.displayName || familyData.name || `${familyId.charAt(0).toUpperCase() + familyId.slice(1)} Family`,
+              name: normalizeFamilyLabel(familyData.displayName || familyData.name) 
+                || `${familyId.charAt(0).toUpperCase() + familyId.slice(1)}`,
               color: color.primary
             }])
           } catch (error) {
             const color = getFamilyColorSync(familyId)
             setFamilies([{
               id: familyId,
-              name: `${familyId.charAt(0).toUpperCase() + familyId.slice(1)} Family`,
+              name: `${familyId.charAt(0).toUpperCase() + familyId.slice(1)}`,
               color: color.primary
             }])
           }
@@ -107,14 +113,15 @@ export default function FamilyLegend({ familyId = null }) {
               const color = getFamilyColorSync(id)
               return {
                 id,
-                name: familyData.displayName || familyData.name || `${id.charAt(0).toUpperCase() + id.slice(1)} Family`,
+                name: normalizeFamilyLabel(familyData.displayName || familyData.name)
+                  || `${id.charAt(0).toUpperCase() + id.slice(1)}`,
                 color: color.primary
               }
             } catch (error) {
               const color = getFamilyColorSync(id)
               return {
                 id,
-                name: `${id.charAt(0).toUpperCase() + id.slice(1)} Family`,
+                name: `${id.charAt(0).toUpperCase() + id.slice(1)}`,
                 color: color.primary
               }
             }

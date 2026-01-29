@@ -8,6 +8,11 @@ import TreeControls from '../../components/FamilyTree/TreeControls'
 import SimpleListView from '../../components/FamilyTree/SimpleListView'
 import Navbar from '../../components/Navbar'
 
+const normalizeFamilyLabel = (name) => {
+  if (!name) return null
+  return name.replace(/^The\s+/i, '').trim()
+}
+
 const Container = styled.div`
   max-width: 100%;
   margin: 0 auto;
@@ -98,7 +103,8 @@ export default function LandingPage() {
             const familyData = await loadFamilyData(familyId)
             return {
               id: familyId,
-              name: familyData.displayName || familyData.name || `${familyId.charAt(0).toUpperCase() + familyId.slice(1)} Family`,
+              name: normalizeFamilyLabel(familyData.displayName || familyData.name)
+                || `${familyId.charAt(0).toUpperCase() + familyId.slice(1)}`,
               ...familyData
             }
           } catch (error) {
@@ -108,7 +114,7 @@ export default function LandingPage() {
             const displayName = familyId
               .split('_')
               .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-              .join(' ') + ' Family'
+              .join(' ')
             
             return {
               id: familyId,
@@ -205,6 +211,7 @@ export default function LandingPage() {
         onViewToggle={handleViewToggle}
         onZoomFit={handleZoomFit}
         onZoomReset={handleZoomReset}
+        useMockData={true}
       />
 
       {viewMode === 'tree' ? (
@@ -212,6 +219,9 @@ export default function LandingPage() {
           <FamilyTreeViewer 
             ref={treeViewerRef}
             familyId={null}
+            worldMode={true}
+            initialWorldId="grewal_main"
+            focusPersonId="baljit_grewal"
             selectedPersonId={selectedPersonId}
             useIndianTerms={useIndianTerms}
           />
