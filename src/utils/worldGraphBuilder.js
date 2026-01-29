@@ -58,10 +58,10 @@ export function buildWorldGraph({
   getFamilyColorSync,
   onNavigateWorld
 }) {
-  const PERSON_WIDTH = 200
-  const PERSON_HEIGHT = 220
-  const PORTAL_WIDTH = 170
-  const PORTAL_HEIGHT = 170
+  const PERSON_WIDTH = 180
+  const PERSON_HEIGHT = 180
+  const PORTAL_WIDTH = 70
+  const PORTAL_HEIGHT = 70
   const personMap = new Map()
   people.forEach(person => personMap.set(person.id, person))
 
@@ -237,11 +237,18 @@ export function buildWorldGraph({
       const edgeKey = [personId, partnerId].sort().join('--')
       if (processedEdges.has(edgeKey)) return
       processedEdges.add(edgeKey)
+
+      const sourceRole = roleById.get(personId)
+      const targetRole = roleById.get(partnerId)
+      const isChildSpouseLink =
+        (sourceRole === 'child' && targetRole === 'child_spouse') ||
+        (sourceRole === 'child_spouse' && targetRole === 'child')
+
       edges.push({
         id: edgeKey,
         source: personId,
         target: partnerId,
-        type: 'straight',
+        type: isChildSpouseLink ? 'step' : 'straight',
         style: { stroke: '#94a3b8', strokeWidth: 2, strokeDasharray: '5,5' }
       })
     })
@@ -356,8 +363,10 @@ export function buildWorldGraph({
   // Manual pyramid layout
   const positions = new Map()
   const centerX = 0
-  const rowGap = 360
-  const nodeGap = 320
+  const rowGap = 320
+  const nodeGap = 340
+  const spouseGap = 140
+  const spouseOffsetX = 120
 
   const placeRow = (ids, y) => {
     const uniqueIds = Array.from(new Set(ids))
@@ -369,16 +378,6 @@ export function buildWorldGraph({
     })
   }
 
-  const buildCoupleRow = (primaryIds, spouseMap) => {
-    const row = []
-    primaryIds.forEach(primaryId => {
-      row.push(primaryId)
-      const spouses = spouseMap.get(primaryId) || []
-      spouses.forEach(spouseId => row.push(spouseId))
-    })
-    return row
-  }
-
   const childSpouseMap = new Map()
   childIds.forEach(childId => {
     const child = personMap.get(childId)
@@ -387,18 +386,32 @@ export function buildWorldGraph({
   })
 
   const middleRow = [principal.id, ...principalPartners]
-  const childRow = buildCoupleRow(childIds, childSpouseMap)
-
   placeRow(middleRow, 0)
-  placeRow(childRow, rowGap)
+
+  // Children row
+  placeRow(childIds, rowGap)
+
+  // Child spouses: below and to the right of each child
+  childIds.forEach(childId => {
+    const childPos = positions.get(childId)
+    if (!childPos) return
+    const spouses = childSpouseMap.get(childId) || []
+    spouses.forEach((spouseId, index) => {
+      const offset = (index - (spouses.length - 1) / 2) * (nodeGap * 0.25)
+      positions.set(spouseId, {
+        x: childPos.x + spouseOffsetX + offset,
+        y: childPos.y + spouseGap
+      })
+    })
+  })
 
   // Place guests in their generation row, after main nodes
   guestIds.forEach(guestId => {
     if (positions.has(guestId)) return
     const generation = generationMap.get(guestId) ?? 0
-    const baseRow = generation === 1 ? childRow : middleRow
-    const y = generation === 1 ? rowGap : 0
-    const x = centerX + (baseRow.length / 2 + 1) * nodeGap
+    const y = generation >= 1 ? rowGap : 0
+    const baseCount = generation >= 1 ? childIds.length : middleRow.length
+    const x = centerX + (baseCount / 2 + 1) * nodeGap
     positions.set(guestId, { x, y })
   })
 
@@ -410,22 +423,77 @@ export function buildWorldGraph({
     }
   })
 
-  // Position portals near their anchor person
+  // Dynamic portal placement to avoid overlap
+  const occupied = []
+  const addRect = (id, pos, width, height) => {
+    occupied.push({
+      id,
+      x: pos.x,
+      y: pos.y,
+      width,
+      height
+    })
+  }
+  const intersects = (rect) => {
+    const buffer = 16
+    return occupied.some(existing => {
+      return !(
+        rect.x + rect.width + buffer < existing.x ||
+        rect.x > existing.x + existing.width + buffer ||
+        rect.y + rect.height + buffer < existing.y ||
+        rect.y > existing.y + existing.height + buffer
+      )
+    })
+  }
+
+  nodes.forEach(node => {
+    if (node.type === 'worldPortal') return
+    const width = node.width || PERSON_WIDTH
+    const height = node.height || PERSON_HEIGHT
+    addRect(node.id, node.position, width, height)
+  })
+
+  const baseCenterX = middleRow.length > 0
+    ? middleRow.reduce((sum, id) => sum + (positions.get(id)?.x || 0), 0) / middleRow.length
+    : 0
+
   nodes.forEach(node => {
     if (node.type !== 'worldPortal') return
     const anchorId = node.data?.anchorPersonId
     if (!anchorId) return
     const anchorPos = positions.get(anchorId)
     if (!anchorPos) return
+
     const relationType = node.data?.relationType
+    const preferRight = anchorPos.x < baseCenterX
     const verticalOffset = relationType === 'parent'
-      ? -rowGap * 0.6
-      : rowGap * 0.6
-    node.position = {
-      x: anchorPos.x + nodeGap * 0.45,
-      y: anchorPos.y + verticalOffset
+      ? -rowGap * 0.9
+      : spouseGap + 120
+    const lateral = nodeGap * 0.55
+
+    const candidates = [
+      { x: anchorPos.x, y: anchorPos.y + verticalOffset },
+      { x: anchorPos.x + (preferRight ? lateral : -lateral), y: anchorPos.y + verticalOffset },
+      { x: anchorPos.x + (preferRight ? lateral * 1.6 : -lateral * 1.6), y: anchorPos.y + verticalOffset }
+    ]
+
+    let chosen = candidates[0]
+    for (const candidate of candidates) {
+      const rect = {
+        x: candidate.x,
+        y: candidate.y,
+        width: PORTAL_WIDTH,
+        height: PORTAL_HEIGHT
+      }
+      if (!intersects(rect)) {
+        chosen = candidate
+        break
+      }
     }
+
+    node.position = chosen
     positions.set(node.id, node.position)
+    addRect(node.id, node.position, PORTAL_WIDTH, PORTAL_HEIGHT)
   })
 
   // Fallback: place any remaining nodes below to avoid stacking
@@ -445,8 +513,8 @@ export function buildWorldGraph({
   let maxX = -Infinity
   let maxY = -Infinity
   nodes.forEach(node => {
-    const width = node.width || 200
-    const height = node.height || 220
+    const width = node.width || PERSON_WIDTH
+    const height = node.height || PERSON_HEIGHT
     minX = Math.min(minX, node.position.x)
     minY = Math.min(minY, node.position.y)
     maxX = Math.max(maxX, node.position.x + width)
@@ -469,6 +537,34 @@ export function buildWorldGraph({
     centerX: (maxX + minX) / 2 + shiftX,
     centerY: (maxY + minY) / 2 + shiftY
   }
+
+  // Move portals to nearest edge of bounds
+  nodes.forEach(node => {
+    if (node.type !== 'worldPortal') return
+    const anchorId = node.data?.anchorPersonId
+    if (!anchorId) return
+    const anchorPos = positions.get(anchorId)
+    if (!anchorPos) return
+    const edges = {
+      left: padding * 0.6,
+      right: bounds.width - PORTAL_WIDTH - padding * 0.6,
+      top: padding * 0.4,
+      bottom: bounds.height - PORTAL_HEIGHT - padding * 0.4
+    }
+    const distTo = {
+      left: Math.abs(anchorPos.x - edges.left),
+      right: Math.abs(anchorPos.x - edges.right),
+      top: Math.abs(anchorPos.y - edges.top),
+      bottom: Math.abs(anchorPos.y - edges.bottom)
+    }
+    const nearest = Object.entries(distTo).sort((a, b) => a[1] - b[1])[0]?.[0] || 'right'
+    const clampedX = Math.min(Math.max(anchorPos.x, edges.left), edges.right)
+    const clampedY = Math.min(Math.max(anchorPos.y, edges.top), edges.bottom)
+    if (nearest === 'left') node.position = { x: edges.left, y: clampedY }
+    if (nearest === 'right') node.position = { x: edges.right, y: clampedY }
+    if (nearest === 'top') node.position = { x: clampedX, y: edges.top }
+    if (nearest === 'bottom') node.position = { x: clampedX, y: edges.bottom }
+  })
 
   return {
     nodes,

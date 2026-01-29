@@ -31,19 +31,26 @@ const EdgeLayer = styled.svg`
 
 const NodeCard = styled.div`
   position: absolute;
-  width: 200px;
-  min-height: 220px;
+  width: 180px;
+  height: 180px;
   background: #ffffff;
   border: 3px solid #94a3b8;
-  border-radius: 18px;
+  border-radius: 999px;
   box-shadow: 0 8px 0 rgba(15, 23, 42, 0.08);
   overflow: hidden;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 `
 
 const NodeHeader = styled.div`
-  height: 90px;
+  height: 64px;
+  width: 64px;
+  border-radius: 999px;
   background: linear-gradient(135deg, #e0e7ff, #fce7f3);
+  border: 2px solid #cbd5e1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -52,7 +59,8 @@ const NodeHeader = styled.div`
 `
 
 const NodeBody = styled.div`
-  padding: 0.75rem 0.75rem 1rem;
+  margin-top: 0.5rem;
+  padding: 0 0.5rem;
 `
 
 const NodeName = styled.div`
@@ -77,26 +85,27 @@ const GuestBadge = styled.div`
   color: #64748b;
 `
 
-const PortalCard = styled(NodeCard)`
-  width: 170px;
-  min-height: 170px;
-  border-style: dashed;
+const PortalCard = styled.div`
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  border-radius: 999px;
+  border: 2px dashed #94a3b8;
   background: #f8fafc;
-  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
 `
 
-const PortalTitle = styled.div`
-  font-weight: 700;
-  margin-top: 0.5rem;
-`
-
-const TravelButton = styled.button`
-  margin-top: 0.5rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  cursor: pointer;
+const PortalLabel = styled.div`
+  position: absolute;
+  top: 74px;
+  width: 140px;
+  left: -35px;
+  text-align: center;
+  font-size: 0.7rem;
+  color: #64748b;
 `
 
 const FamilyTreeViewer = forwardRef(function FamilyTreeViewer({
@@ -228,19 +237,20 @@ const FamilyTreeViewer = forwardRef(function FamilyTreeViewer({
           if (isPortal) {
             return (
               <PortalCard key={node.id} style={style}>
-                <NodeBody>
-                  <PortalTitle>{node.data?.worldName} World</PortalTitle>
-                  <NodeMeta>Via {node.data?.viaPeople?.[0]?.name}</NodeMeta>
-                  <TravelButton onClick={() => node.data?.onNavigate(node.data?.worldId, node.data?.focusPersonId)}>
-                    Travel
-                  </TravelButton>
-                </NodeBody>
+                <span>🧭</span>
+                <PortalLabel>{node.data?.worldName}</PortalLabel>
               </PortalCard>
             )
           }
 
           return (
-            <NodeCard key={node.id} style={style}>
+            <NodeCard
+              key={node.id}
+              style={{
+                ...style,
+                borderStyle: node.data?.role?.includes('spouse') ? 'dashed' : 'solid'
+              }}
+            >
               <NodeHeader>{node.data?.sprite || '⭐'}</NodeHeader>
               <NodeBody>
                 <NodeName>{node.data?.name}</NodeName>
