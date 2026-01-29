@@ -8,84 +8,116 @@
 import { parseTreeId, getFamilyIdFromPerson } from './treeUtils'
 
 /**
- * Find bridge people - people who connect one family to another
+ * Find bridge people from OPEN families that connect to a collapsed family.
  * A bridge person is someone who:
- * 1. Belongs to family A (collapsed)
- * 2. Has a partner/parent/child relationship with someone in family B (open)
- * 
+ * 1. Belongs to an OPEN family
+ * 2. Has a partner/parent/child relationship with someone in the collapsed family
+ *
  * @param {Array} allPeople - All people in the tree
  * @param {Set<string>} openFamilyIds - Set of open family IDs
  * @param {string} collapsedFamilyId - The collapsed family we're checking
  * @returns {Array<Object>} - Array of {id, name} objects for bridge people
  */
 export function findBridgePeople(allPeople, openFamilyIds, collapsedFamilyId) {
-  const bridgePeople = []
+  if (!openFamilyIds || openFamilyIds.size === 0) {
+    return []
+  }
+
   const personMap = new Map()
-  
-  // Create person map for quick lookup
   allPeople.forEach(person => {
     personMap.set(person.id, person)
   })
 
-  // Find all people in the collapsed family
-  const collapsedFamilyPeople = allPeople.filter(person => {
+  // Build a set of person IDs in the collapsed family for quick lookup
+  const collapsedIds = new Set(
+    allPeople
+      .filter(person => getFamilyIdFromPerson(person) === collapsedFamilyId)
+      .map(person => person.id)
+  )
+
+  const bridgePeople = new Map()
+
+  allPeople.forEach(person => {
     const personFamilyId = getFamilyIdFromPerson(person)
-    return personFamilyId && personFamilyId === collapsedFamilyId
+    if (!personFamilyId || !openFamilyIds.has(personFamilyId)) {
+      return
+    }
+
+    const relatedIds = [
+      ...(person.partners || []),
+      ...(person.parents || []),
+      ...(person.children || [])
+    ]
+
+    const connectsToCollapsed = relatedIds.some(relatedId => collapsedIds.has(relatedId))
+    if (connectsToCollapsed) {
+      const fullName = `${person.firstName} ${person.lastName}`.trim()
+      bridgePeople.set(person.id, fullName)
+    }
   })
 
-  // Check each person in collapsed family for connections to open families
-  collapsedFamilyPeople.forEach(person => {
-    let isBridge = false
+  return Array.from(bridgePeople.entries()).map(([id, name]) => ({ id, name }))
+}
 
-    // Check partners
+function addFamilyEdge(familyEdges, fromPerson, toPerson, relationshipType) {
+  const fromFamily = getFamilyIdFromPerson(fromPerson)
+  const toFamily = getFamilyIdFromPerson(toPerson)
+  if (!fromFamily || !toFamily || fromFamily === toFamily) {
+    return
+  }
+
+  const key = [fromFamily, toFamily].sort().join('--')
+  if (!familyEdges.has(key)) {
+    familyEdges.set(key, {
+      familyA: fromFamily,
+      familyB: toFamily,
+      relationshipType,
+      via: {
+        fromPersonId: fromPerson.id,
+        toPersonId: toPerson.id
+      }
+    })
+  }
+}
+
+function buildFamilyEdges(allPeople) {
+  const personMap = new Map()
+  allPeople.forEach(person => {
+    personMap.set(person.id, person)
+  })
+
+  const familyEdges = new Map()
+
+  allPeople.forEach(person => {
     if (person.partners && Array.isArray(person.partners)) {
       person.partners.forEach(partnerId => {
         const partner = personMap.get(partnerId)
         if (partner) {
-          const partnerFamilyId = getFamilyIdFromPerson(partner)
-          if (partnerFamilyId && openFamilyIds.has(partnerFamilyId)) {
-            isBridge = true
-          }
+          addFamilyEdge(familyEdges, person, partner, 'partner')
         }
       })
     }
 
-    // Check parents
     if (person.parents && Array.isArray(person.parents)) {
       person.parents.forEach(parentId => {
         const parent = personMap.get(parentId)
         if (parent) {
-          const parentFamilyId = getFamilyIdFromPerson(parent)
-          if (parentFamilyId && openFamilyIds.has(parentFamilyId)) {
-            isBridge = true
-          }
+          addFamilyEdge(familyEdges, parent, person, 'parentChild')
         }
       })
     }
 
-    // Check children
     if (person.children && Array.isArray(person.children)) {
       person.children.forEach(childId => {
         const child = personMap.get(childId)
         if (child) {
-          const childFamilyId = getFamilyIdFromPerson(child)
-          if (childFamilyId && openFamilyIds.has(childFamilyId)) {
-            isBridge = true
-          }
+          addFamilyEdge(familyEdges, person, child, 'parentChild')
         }
-      })
-    }
-
-    if (isBridge) {
-      const fullName = `${person.firstName} ${person.lastName}`.trim()
-      bridgePeople.push({
-        id: person.id,
-        name: fullName
       })
     }
   })
 
-  return bridgePeople
+  return familyEdges
 }
 
 /**
@@ -118,8 +150,11 @@ export function getFamilyMetadata(allPeople, familyId, familiesMetadata = null) 
 
   // Safely format family name
   let familyName = familyMeta.label || familyMeta.name
+  if (familyName) {
+    familyName = familyName.replace(/^The\s+/i, '').trim()
+  }
   if (!familyName && familyId && familyId.length > 0) {
-    familyName = `${familyId.charAt(0).toUpperCase() + familyId.slice(1)} Family`
+    familyName = `${familyId.charAt(0).toUpperCase() + familyId.slice(1)}`
   } else if (!familyName) {
     familyName = 'Unknown Family'
   }
@@ -151,7 +186,6 @@ export function buildClusterGraph(
 ) {
   const nodes = []
   const edges = []
-  const processedEdges = new Set()
   const personMap = new Map()
   
   // Create person map
@@ -237,78 +271,131 @@ export function buildClusterGraph(
     }
   })
 
-  // Build edges
-  allPeople.forEach(person => {
-    const personFamilyId = getFamilyIdFromPerson(person)
-    const personIsOpen = openFamilyIds.has(personFamilyId)
+  const openFamiliesExist = openFamilyIds.size > 0
 
-    // Partner edges
+  if (!openFamiliesExist) {
+    const familyEdges = buildFamilyEdges(allPeople)
+    familyEdges.forEach(edgeInfo => {
+      edges.push({
+        id: `edge-cluster-${edgeInfo.familyA}-${edgeInfo.familyB}`,
+        source: `cluster_${edgeInfo.familyA}`,
+        target: `cluster_${edgeInfo.familyB}`,
+        type: 'smoothstep',
+        animated: false,
+        style: {
+          stroke: '#94a3b8',
+          strokeWidth: 2,
+          strokeDasharray: edgeInfo.relationshipType === 'partner' ? '5,5' : undefined
+        }
+      })
+    })
+
+    return { nodes, edges }
+  }
+
+  const processedEdges = new Set()
+  const bridgeEdges = new Map()
+  const relationPairs = []
+  const partnerPairs = new Set()
+
+  allPeople.forEach(person => {
+    if (person.parents && Array.isArray(person.parents)) {
+      person.parents.forEach(parentId => {
+        relationPairs.push({
+          type: 'parentChild',
+          source: parentId,
+          target: person.id
+        })
+      })
+    }
+
     if (person.partners && Array.isArray(person.partners)) {
       person.partners.forEach(partnerId => {
-        const edgeKey = [person.id, partnerId].sort().join('--')
-        if (processedEdges.has(edgeKey)) return
-        processedEdges.add(edgeKey)
-
-        const partner = personMap.get(partnerId)
-        if (!partner) return
-
-        const partnerFamilyId = getFamilyIdFromPerson(partner)
-        const partnerIsOpen = openFamilyIds.has(partnerFamilyId)
-
-        // Only add edge if at least one person is in an open family
-        // OR if both are in the same collapsed family (edge will connect to cluster)
-        if (personIsOpen || partnerIsOpen || personFamilyId === partnerFamilyId) {
-          const sourceId = personIsOpen ? person.id : `cluster_${personFamilyId}`
-          const targetId = partnerIsOpen ? partnerId : `cluster_${partnerFamilyId}`
-
-          edges.push({
-            id: `edge-${person.id}-${partnerId}`,
-            source: sourceId,
-            target: targetId,
-            type: 'smoothstep',
-            animated: false,
-            style: {
-              stroke: '#94a3b8',
-              strokeWidth: 2,
-              strokeDasharray: '5,5'
-            }
-          })
-        }
+        const key = [person.id, partnerId].sort().join('--')
+        if (partnerPairs.has(key)) return
+        partnerPairs.add(key)
+        relationPairs.push({
+          type: 'partner',
+          source: person.id,
+          target: partnerId
+        })
       })
     }
+  })
 
-    // Parent-child edges
-    if (person.children && Array.isArray(person.children)) {
-      person.children.forEach(childId => {
-        const edgeKey = `${person.id}--${childId}`
-        if (processedEdges.has(edgeKey)) return
-        processedEdges.add(edgeKey)
+  const addEdgeOnce = (sourceId, targetId, edgeId, style) => {
+    if (processedEdges.has(edgeId)) return
+    processedEdges.add(edgeId)
+    edges.push({
+      id: edgeId,
+      source: sourceId,
+      target: targetId,
+      type: 'smoothstep',
+      animated: false,
+      style
+    })
+  }
 
-        const child = personMap.get(childId)
-        if (!child) return
+  relationPairs.forEach(({ type, source, target }) => {
+    const sourcePerson = personMap.get(source)
+    const targetPerson = personMap.get(target)
+    if (!sourcePerson || !targetPerson) return
 
-        const childFamilyId = getFamilyIdFromPerson(child)
-        const childIsOpen = openFamilyIds.has(childFamilyId)
+    const sourceFamilyId = getFamilyIdFromPerson(sourcePerson)
+    const targetFamilyId = getFamilyIdFromPerson(targetPerson)
+    const sourceIsOpen = openFamilyIds.has(sourceFamilyId)
+    const targetIsOpen = openFamilyIds.has(targetFamilyId)
 
-        // Only add edge if at least one person is in an open family
-        if (personIsOpen || childIsOpen || personFamilyId === childFamilyId) {
-          const sourceId = personIsOpen ? person.id : `cluster_${personFamilyId}`
-          const targetId = childIsOpen ? childId : `cluster_${childFamilyId}`
-
-          edges.push({
-            id: `edge-${person.id}-${childId}`,
-            source: sourceId,
-            target: targetId,
-            type: 'smoothstep',
-            animated: false,
-            style: {
-              stroke: '#64748b',
-              strokeWidth: 2
-            }
-          })
-        }
-      })
+    // Same-family or open-open connections
+    if (sourceIsOpen && targetIsOpen) {
+      const edgeId = `edge-${type}-${[source, target].sort().join('--')}`
+      addEdgeOnce(
+        source,
+        target,
+        edgeId,
+        type === 'partner'
+          ? { stroke: '#94a3b8', strokeWidth: 2, strokeDasharray: '5,5' }
+          : { stroke: '#64748b', strokeWidth: 2 }
+      )
+      return
     }
+
+    // Open family to collapsed family: single bridge edge per family pair
+    if (sourceIsOpen && !targetIsOpen && targetFamilyId) {
+      const bridgeKey = `${sourceFamilyId}--${targetFamilyId}`
+      if (!bridgeEdges.has(bridgeKey)) {
+        bridgeEdges.set(bridgeKey, {
+          sourceId: source,
+          targetId: `cluster_${targetFamilyId}`,
+          relationshipType: type
+        })
+      }
+      return
+    }
+
+    if (!sourceIsOpen && targetIsOpen && sourceFamilyId) {
+      const bridgeKey = `${targetFamilyId}--${sourceFamilyId}`
+      if (!bridgeEdges.has(bridgeKey)) {
+        bridgeEdges.set(bridgeKey, {
+          sourceId: target,
+          targetId: `cluster_${sourceFamilyId}`,
+          relationshipType: type
+        })
+      }
+    }
+  })
+
+  bridgeEdges.forEach((edgeInfo, key) => {
+    edges.push({
+      id: `edge-bridge-${key}`,
+      source: edgeInfo.sourceId,
+      target: edgeInfo.targetId,
+      type: 'smoothstep',
+      animated: false,
+      style: edgeInfo.relationshipType === 'partner'
+        ? { stroke: '#94a3b8', strokeWidth: 2, strokeDasharray: '5,5' }
+        : { stroke: '#64748b', strokeWidth: 2 }
+    })
   })
 
   return { nodes, edges }

@@ -130,7 +130,7 @@ export default function SimpleListView({ familyId = null }) {
           
           setFamilies([{
             id: familyId,
-            name: `${familyId.charAt(0).toUpperCase() + familyId.slice(1)} Family`,
+            name: `${familyId.charAt(0).toUpperCase() + familyId.slice(1)}`,
             people: peopleList
           }])
         } else {
@@ -149,7 +149,7 @@ export default function SimpleListView({ familyId = null }) {
             if (!familyMap.has(personFamilyId)) {
               familyMap.set(personFamilyId, {
                 id: personFamilyId,
-                name: `${personFamilyId.charAt(0).toUpperCase() + personFamilyId.slice(1)} Family`,
+                name: `${personFamilyId.charAt(0).toUpperCase() + personFamilyId.slice(1)}`,
                 people: []
               })
             }

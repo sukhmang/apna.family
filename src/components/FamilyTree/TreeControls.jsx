@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { loadTreeData } from '../../utils/treeLoader'
+import { getAllPeople } from '../../services/personService'
+import { getMockPeople } from '../../mock/mockWorldApi'
 import { getFamilyId } from '../../utils/subdomain'
 
 const ControlsContainer = styled.div`
@@ -127,7 +129,8 @@ export default function TreeControls({
   viewMode,
   onViewToggle,
   onZoomFit,
-  onZoomReset
+  onZoomReset,
+  useMockData = false
 }) {
   // Get familyId from subdomain (works on both root and family subdomains)
   const familyId = getFamilyId()
@@ -137,9 +140,19 @@ export default function TreeControls({
   useEffect(() => {
     const loadPeople = async () => {
       try {
-        // Use familyId for cluster optimization
-        const treeData = await loadTreeData(familyId)
-        const allPeople = treeData.people || []
+        let allPeople = []
+        if (!familyId) {
+          const people = useMockData ? await getMockPeople() : await getAllPeople()
+          allPeople = people.map(person => ({
+            id: person.id,
+            firstName: person.first_name,
+            lastName: person.last_name
+          }))
+        } else {
+          // Use familyId for cluster optimization
+          const treeData = await loadTreeData(familyId)
+          allPeople = treeData.people || []
+        }
         
         // Sort people by name for easier selection
         const sortedPeople = allPeople

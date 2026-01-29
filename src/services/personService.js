@@ -50,6 +50,20 @@ export const getPeopleByIds = async (personIds) => {
 }
 
 /**
+ * Get all people
+ * @returns {Promise<Array>} - Array of people
+ */
+export const getAllPeople = async () => {
+  const { data, error } = await supabase
+    .from('people')
+    .select('*')
+    .order('first_name')
+
+  if (error) throw error
+  return data
+}
+
+/**
  * Get family head and immediate family (for root domain)
  * @param {string} headId - Head person ID
  * @returns {Promise<Object>} - Head person with related people

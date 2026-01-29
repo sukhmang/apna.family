@@ -7,13 +7,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "migrate-to-supabase": "node migrations/002-data-migration.js",
-    "compare-databases": "node migrations/007-compare-dev-prd.js",
-    "update-gallery": "node scripts/update-gallery.js",
     "update-gallery-csv": "node scripts/update-gallery-csv.js --family=grewal",
     "generate-thumbnails": "node scripts/generate-thumbnails.js --family=grewal",
     "sort-gallery-csv": "node scripts/sort-gallery-csv.js --family=grewal",
-    "sync-gallery": "node scripts/sync-gallery.js --family=grewal",
-    "upload-to-cdn": "node scripts/upload-to-cdn.js"
+    "sync-gallery": "node scripts/sync-gallery.js --family=grewal"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.93.1",

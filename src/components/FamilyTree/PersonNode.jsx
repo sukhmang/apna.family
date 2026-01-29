@@ -116,6 +116,18 @@ const RelationshipBadge = styled.div`
   margin-top: 0.25rem;
 `
 
+const GuestBadge = styled.div`
+  display: inline-block;
+  padding: 0.2rem 0.45rem;
+  font-size: ${props => props.theme.typography.sizes.xs};
+  font-weight: ${props => props.theme.typography.weights.semibold};
+  background-color: ${props => props.theme.colors.text.secondary}15;
+  color: ${props => props.theme.colors.text.secondary};
+  border-radius: ${props => props.theme.borderRadius.sm};
+  border: 1px dashed ${props => props.theme.colors.text.secondary}60;
+  margin-top: 0.35rem;
+`
+
 const DefaultImage = styled.div`
   width: 100%;
   height: 100%;
@@ -140,6 +152,7 @@ const DefaultImage = styled.div`
   color: ${props => props.theme.colors.text.secondary};
   font-size: ${props => props.theme.typography.sizes['2xl']};
   font-weight: ${props => props.theme.typography.weights.bold};
+  image-rendering: pixelated;
 `
 
 const LocationIcon = styled(MapPin)`
@@ -187,7 +200,9 @@ function PersonNode({ data, selected }) {
     currentLocation,
     isPet,
     gender,
-    zoomLevel = 1
+    zoomLevel = 1,
+    isGuest = false,
+    sprite = null
   } = data || {}
 
   // Hide text when zoomed out too far (below 0.3 zoom)
@@ -332,6 +347,8 @@ function PersonNode({ data, selected }) {
         >
           {isPet ? (
             <PetIcon />
+          ) : sprite ? (
+            sprite
           ) : (
             getInitials()
           )}
@@ -369,6 +386,9 @@ function PersonNode({ data, selected }) {
         )}
         {relationshipLabel && !hideText && (
           <RelationshipBadge>{relationshipLabel}</RelationshipBadge>
+        )}
+        {isGuest && !relationshipLabel && !hideText && (
+          <GuestBadge>Guest</GuestBadge>
         )}
       </Content>
 

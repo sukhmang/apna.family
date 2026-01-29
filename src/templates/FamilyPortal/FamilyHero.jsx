@@ -122,9 +122,13 @@ export default function FamilyHero({ familyData }) {
     }
   }
 
+  const familyTitle = (familyData?.displayName || familyData?.name || 'Family Portal')
+    .replace(/^The\s+/i, '')
+    .trim()
+
   return (
     <Container>
-      <Title>{familyData?.displayName || familyData?.name || 'Family Portal'}</Title>
+      <Title>{familyTitle}</Title>
       <Description>
         {familyData?.description || 'Welcome to our family network'}
       </Description>
